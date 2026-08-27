@@ -1,0 +1,30 @@
+{
+  "name": "engagement-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:push": "drizzle-kit push",
+    "db:seed": "tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0",
+    "drizzle-orm": "^0.30.10",
+    "next": "14.2.3",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "drizzle-kit": "^0.21.4",
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0",
+    "tsx": "^4.11.0",
+    "typescript": "^5"
+  }
+}
