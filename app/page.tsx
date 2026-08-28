@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function Home() {
   const rows = await db.select().from(contacts)
+    .where(sql`(excluded = 0 OR excluded IS NULL) AND (eng_count = 0 OR eng_count IS NULL) AND NOT (tags @> ARRAY['to-check']::text[])`)
     .orderBy(
       sql`${contacts.lastEngaged} ASC NULLS FIRST`,
       asc(contacts.queuePos),
