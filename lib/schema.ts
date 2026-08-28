@@ -10,6 +10,7 @@ export const contacts = pgTable('contacts', {
   engCount: integer('eng_count').default(0),
   lastEngaged: date('last_engaged'),
   queuePos: integer('queue_pos'),
+  excluded: integer('excluded').default(0), // 0 = in queue, 1 = excluded
   createdAt: timestamp('created_at').defaultNow(),
 })
 

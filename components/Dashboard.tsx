@@ -31,8 +31,8 @@ const FILTERS = [
   { key: 'peer', label: 'Peer' },
   { key: 'client', label: 'Client' },
   { key: 'va', label: 'VA/OBM' },
-  { key: 'skip', label: 'Skip' },
   { key: 'engaged', label: 'Engaged' },
+  { key: 'excluded', label: 'Excluded' },
 ]
 
 interface Props {
@@ -139,6 +139,19 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
     })
     const updated: Contact = await res.json()
     setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
+  }
+
+  async function toggleExclude(id: number, currentlyExcluded: boolean) {
+    const res = await fetch('/api/contacts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, excluded: !currentlyExcluded }),
+    })
+    const updated: Contact = await res.json()
+    // Remove from current view (they no longer belong in this filter)
+    setContacts(prev => prev.filter(c => c.id !== id))
+    const nextFiltered = filtered.filter(c => c.id !== id)
+    setCurrentId(nextFiltered[0]?.id ?? null)
   }
 
   async function saveFbUrl(val: string) {
@@ -251,9 +264,15 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                   Done — Next
                 </button>
-                <button onClick={() => engage(current.id, false)} style={{ background: '#F0F3F9', color: '#4B5270', border: '1px solid #DDE1ED', padding: '11px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-                  Skip
-                </button>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#F0F3F9', border: '1px solid #DDE1ED', padding: '11px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', color: current.excluded ? '#DC2626' : '#4B5270' }}>
+                  <input
+                    type="checkbox"
+                    checked={!current.excluded}
+                    onChange={() => toggleExclude(current.id, !!current.excluded)}
+                    style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#3B7EF6' }}
+                  />
+                  {current.excluded ? 'Excluded' : 'Include'}
+                </label>
               </div>
 
               {flash && (
