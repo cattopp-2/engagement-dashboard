@@ -11,19 +11,18 @@ export async function GET(req: NextRequest) {
   // Build WHERE clause
   let whereClause: ReturnType<typeof sql> | undefined
 
-  if (search) {
-    whereClause = sql`name ILIKE ${'%' + search + '%'}`
-  } else if (tag === 'excluded') {
-    whereClause = sql`excluded = 1`
+  const nameFilter = search ? sql`name ILIKE ${'%' + search + '%'} AND ` : sql``
+
+  if (tag === 'excluded') {
+    whereClause = sql`${nameFilter}excluded = 1`
   } else if (tag === 'engaged') {
-    whereClause = sql`eng_count > 0 AND (excluded = 0 OR excluded IS NULL)`
+    whereClause = sql`${nameFilter}eng_count > 0 AND (excluded = 0 OR excluded IS NULL)`
   } else if (tag === 'untagged') {
-    whereClause = sql`(excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`
+    whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`
   } else if (tag && tag !== 'all') {
-    whereClause = sql`(excluded = 0 OR excluded IS NULL) AND ${tag} = ANY(tags)`
+    whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL) AND ${tag} = ANY(tags)`
   } else {
-    // default: all queue (non-excluded)
-    whereClause = sql`(excluded = 0 OR excluded IS NULL)`
+    whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL)`
   }
 
   // Order: engaged tab sorts by most recent first; everything else by queue order
