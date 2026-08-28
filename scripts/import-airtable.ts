@@ -310,8 +310,8 @@ async function run() {
     const name = rawName.trim().replace(/\s+/g, ' ')
     if (!name) continue
 
-    // Prefer direct profile URL, fall back to messenger link
-    const fbUrl = fbProfile || messenger || ''
+    const fbUrl = fbProfile || ''
+    const messengerUrl = messenger || ''
 
     // Try to find existing contact by name (case-insensitive)
     const existing = await db.select().from(schema.contacts)
@@ -326,6 +326,7 @@ async function run() {
       await db.update(schema.contacts)
         .set({
           fbUrl: contact.fbUrl || fbUrl || undefined,
+          messengerUrl: (contact as any).messengerUrl || messengerUrl || undefined,
           notes: contact.notes || notes || undefined,
           tags: newTags,
         })
@@ -339,6 +340,7 @@ async function run() {
         name,
         source: 'friend',
         fbUrl: fbUrl || undefined,
+        messengerUrl: messengerUrl || undefined,
         notes: notes || undefined,
         tags: ['to-check'],
         engCount: 0,
