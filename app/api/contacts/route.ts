@@ -14,12 +14,19 @@ export async function GET(req: NextRequest) {
     ? sql`${contacts.excluded} = 1`
     : sql`(${contacts.excluded} = 0 OR ${contacts.excluded} IS NULL)`
 
+  const isEngaged = tag === 'engaged'
+
   let rows
   if (search) {
     rows = await db.select().from(contacts)
       .where(sql`${contacts.name} ILIKE ${`%${search}%`}`)
       .orderBy(sql`${contacts.lastEngaged} ASC NULLS FIRST`, asc(contacts.queuePos), asc(contacts.id))
       .limit(200)
+  } else if (isEngaged) {
+    rows = await db.select().from(contacts)
+      .where(sql`${contacts.eng_count} > 0`)
+      .orderBy(sql`${contacts.last_engaged} DESC NULLS LAST`)
+      .limit(500)
   } else {
     rows = await db.select().from(contacts)
       .where(excludeFilter)
@@ -28,10 +35,8 @@ export async function GET(req: NextRequest) {
   }
 
   let filtered = rows
-  if (!showExcluded && !search) {
-    // tag filters apply only to the normal queue view
+  if (!showExcluded && !search && !isEngaged) {
     if (tag === 'untagged') filtered = rows.filter(c => !c.tags || c.tags.length === 0)
-    else if (tag === 'engaged') filtered = rows.filter(c => (c.engCount ?? 0) > 0)
     else if (tag && tag !== 'all') filtered = rows.filter(c => c.tags?.includes(tag))
   }
 
