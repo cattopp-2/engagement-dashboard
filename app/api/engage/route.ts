@@ -11,7 +11,11 @@ export async function POST(req: NextRequest) {
   const [{ maxPos }] = await db.select({ maxPos: max(contacts.queuePos) }).from(contacts)
   const newPos = (maxPos ?? 0) + 1
 
-  const updates: Record<string, unknown> = { queuePos: newPos }
+  // Fetch current tags so we can strip 'to-check'
+  const [current] = await db.select({ tags: contacts.tags }).from(contacts).where(eq(contacts.id, id))
+  const newTags = (current?.tags ?? []).filter((t: string) => t !== 'to-check')
+
+  const updates: Record<string, unknown> = { queuePos: newPos, tags: newTags }
   if (count) {
     updates.lastEngaged = today
     updates.engCount = sql`${contacts.engCount} + 1`
