@@ -1,46 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { contacts } from '@/lib/schema'
-import { eq, asc, sql, ilike, ne } from 'drizzle-orm'
+import { eq, asc, sql, gt } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const search = searchParams.get('search') || ''
   const tag = searchParams.get('tag') || ''
-  const showExcluded = tag === 'excluded'
 
-  // By default hide excluded; when filter is 'excluded' show only excluded
-  const excludeFilter = showExcluded
-    ? sql`${contacts.excluded} = 1`
-    : sql`(${contacts.excluded} = 0 OR ${contacts.excluded} IS NULL)`
+  // Build WHERE clause
+  let whereClause: ReturnType<typeof sql> | undefined
 
-  const isEngaged = tag === 'engaged'
-
-  let rows
   if (search) {
-    rows = await db.select().from(contacts)
-      .where(sql`${contacts.name} ILIKE ${`%${search}%`}`)
-      .orderBy(sql`${contacts.lastEngaged} ASC NULLS FIRST`, asc(contacts.queuePos), asc(contacts.id))
-      .limit(200)
-  } else if (isEngaged) {
-    rows = await db.select().from(contacts)
-      .where(sql`${contacts.eng_count} > 0`)
-      .orderBy(sql`${contacts.last_engaged} DESC NULLS LAST`)
-      .limit(500)
+    whereClause = sql`name ILIKE ${'%' + search + '%'}`
+  } else if (tag === 'excluded') {
+    whereClause = sql`excluded = 1`
+  } else if (tag === 'engaged') {
+    whereClause = sql`eng_count > 0`
+  } else if (tag === 'untagged') {
+    whereClause = sql`(excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`
+  } else if (tag && tag !== 'all') {
+    whereClause = sql`(excluded = 0 OR excluded IS NULL) AND ${tag} = ANY(tags)`
   } else {
-    rows = await db.select().from(contacts)
-      .where(excludeFilter)
-      .orderBy(sql`${contacts.lastEngaged} ASC NULLS FIRST`, asc(contacts.queuePos), asc(contacts.id))
-      .limit(500)
+    // default: all queue (non-excluded)
+    whereClause = sql`(excluded = 0 OR excluded IS NULL)`
   }
 
-  let filtered = rows
-  if (!showExcluded && !search && !isEngaged) {
-    if (tag === 'untagged') filtered = rows.filter(c => !c.tags || c.tags.length === 0)
-    else if (tag && tag !== 'all') filtered = rows.filter(c => c.tags?.includes(tag))
-  }
+  // Order: engaged tab sorts by most recent first; everything else by queue order
+  const orderClause = tag === 'engaged'
+    ? sql`last_engaged DESC NULLS LAST`
+    : sql`last_engaged ASC NULLS FIRST, queue_pos ASC NULLS LAST, id ASC`
 
-  return NextResponse.json(filtered)
+  const rows = await db.select().from(contacts)
+    .where(whereClause)
+    .orderBy(orderClause)
+    .limit(500)
+
+  return NextResponse.json(rows)
 }
 
 export async function PATCH(req: NextRequest) {
