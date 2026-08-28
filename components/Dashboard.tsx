@@ -51,6 +51,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const [flash, setFlash] = useState(false)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [notes, setNotes] = useState('')
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const current = contacts.find(c => c.id === currentId) ?? null
 
@@ -58,13 +59,21 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
     if (current) setNotes(current.notes ?? '')
   }, [currentId])
 
-  const filtered = contacts.filter(c => {
-    if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false
-    if (activeFilter === 'all') return true
-    if (activeFilter === 'untagged') return !c.tags || c.tags.length === 0
-    if (activeFilter === 'engaged') return (c.engCount ?? 0) > 0
-    return c.tags?.includes(activeFilter) ?? false
-  })
+  // When search or filter changes, query the server (search uses ilike on full DB)
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(async () => {
+      const params = new URLSearchParams()
+      if (search) params.set('search', search)
+      if (activeFilter !== 'all') params.set('tag', activeFilter)
+      const res = await fetch(`/api/contacts?${params}`)
+      const rows: Contact[] = await res.json()
+      setContacts(rows)
+      setCurrentId(rows[0]?.id ?? null)
+    }, 300)
+  }, [search, activeFilter])
+
+  const filtered = contacts
 
   async function engage(id: number, count: boolean) {
     const res = await fetch('/api/engage', {
