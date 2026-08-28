@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   } else if (tag === 'excluded') {
     whereClause = sql`excluded = 1`
   } else if (tag === 'engaged') {
-    whereClause = sql`eng_count > 0`
+    whereClause = sql`eng_count > 0 AND (excluded = 0 OR excluded IS NULL)`
   } else if (tag === 'untagged') {
     whereClause = sql`(excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`
   } else if (tag && tag !== 'all') {
