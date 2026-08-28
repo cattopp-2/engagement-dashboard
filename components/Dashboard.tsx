@@ -4,13 +4,13 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import type { Contact } from '@/lib/schema'
 
 const TAGS = [
-  { key: 'icp',    label: 'ICP',       color: '#16A34A', bg: '#DCFCE7' },
-  { key: 'coach',  label: 'Coach',     color: '#7C3AED', bg: '#EDE9FE' },
-  { key: 'warm',   label: 'Warm Lead', color: '#B45309', bg: '#FEF3C7' },
-  { key: 'peer',   label: 'Peer',      color: '#0369A1', bg: '#E0F2FE' },
-  { key: 'client', label: 'Client',    color: '#BE185D', bg: '#FCE7F3' },
-  { key: 'va',     label: 'VA/OBM',    color: '#6B7280', bg: '#F3F4F6' },
-  { key: 'skip',   label: 'Skip',      color: '#DC2626', bg: '#FEE2E2' },
+  { key: 'icp',      label: 'ICP',        color: '#16A34A', bg: '#DCFCE7' },
+  { key: 'coach',    label: 'Coach',      color: '#7C3AED', bg: '#EDE9FE' },
+  { key: 'warm',     label: 'Warm Lead',  color: '#B45309', bg: '#FEF3C7' },
+  { key: 'peer',     label: 'Peer',       color: '#0369A1', bg: '#E0F2FE' },
+  { key: 'client',   label: 'Client',     color: '#BE185D', bg: '#FCE7F3' },
+  { key: 'va',       label: 'VA/OBM',     color: '#6B7280', bg: '#F3F4F6' },
+  { key: 'to-check', label: 'To Check',   color: '#D97706', bg: '#FEF3C7' },
 ]
 
 const TAG_COLOR: Record<string, string> = Object.fromEntries(TAGS.map(t => [t.key, t.color]))
@@ -32,6 +32,7 @@ const FILTERS = [
   { key: 'client', label: 'Client' },
   { key: 'va', label: 'VA/OBM' },
   { key: 'engaged', label: 'Engaged' },
+  { key: 'to-check', label: 'To Check' },
   { key: 'excluded', label: 'Excluded' },
 ]
 
