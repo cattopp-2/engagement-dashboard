@@ -346,7 +346,6 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                 <div key={c.id} onClick={() => setCurrentId(c.id)}
                   style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 16px', cursor: 'pointer', borderBottom: '1px solid #DDE1ED', background: isCurrent ? 'rgba(59,126,246,0.08)' : 'transparent', borderLeft: isCurrent ? '3px solid #3B7EF6' : '3px solid transparent', paddingLeft: isCurrent ? 13 : 16, minHeight: 40, transition: 'background 0.1s' }}>
                   <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#8892B0', width: 26, flexShrink: 0 }}>{i + 1}</span>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: srcColor, opacity: 0.6, flexShrink: 0 }} />
                   <span style={{ flex: 1, fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</span>
                   <span style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
                     {(c.tags ?? []).map(t => (
