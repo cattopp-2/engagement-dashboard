@@ -51,12 +51,16 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const [flash, setFlash] = useState(false)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [notes, setNotes] = useState('')
+  const [fbUrl, setFbUrl] = useState('')
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const current = contacts.find(c => c.id === currentId) ?? null
 
   useEffect(() => {
-    if (current) setNotes(current.notes ?? '')
+    if (current) {
+      setNotes(current.notes ?? '')
+      setFbUrl(current.fbUrl ?? '')
+    }
   }, [currentId])
 
   // When search or filter changes, query the server (search uses ilike on full DB)
@@ -131,7 +135,18 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
     const res = await fetch('/api/contacts', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: current.id, tags: current.tags, notes: val }),
+      body: JSON.stringify({ id: current.id, tags: current.tags, notes: val, fbUrl: current.fbUrl }),
+    })
+    const updated: Contact = await res.json()
+    setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
+  }
+
+  async function saveFbUrl(val: string) {
+    if (!current) return
+    const res = await fetch('/api/contacts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: current.id, tags: current.tags, notes: current.notes, fbUrl: val }),
     })
     const updated: Contact = await res.json()
     setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
@@ -205,6 +220,17 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                 })}
               </div>
 
+              {/* Facebook URL */}
+              <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 7 }}>Facebook Profile URL</div>
+              <input
+                type="url"
+                value={fbUrl}
+                onChange={e => setFbUrl(e.target.value)}
+                onBlur={e => saveFbUrl(e.target.value)}
+                placeholder="Paste profile URL here…"
+                style={{ width: '100%', background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13, color: '#1A1F36', outline: 'none', marginBottom: 14, boxSizing: 'border-box' }}
+              />
+
               {/* Notes */}
               <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 7 }}>Notes</div>
               <textarea
@@ -216,7 +242,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
 
               {/* Actions */}
               <div style={{ display: 'flex', gap: 8 }}>
-                <a href={`https://www.facebook.com/search/people/?q=${encodeURIComponent(current.name)}`} target="_blank" rel="noreferrer"
+                <a href={current.fbUrl || `https://www.facebook.com/search/people/?q=${encodeURIComponent(current.name)}`} target="_blank" rel="noreferrer"
                   style={{ background: 'rgba(59,126,246,0.10)', color: '#3B7EF6', border: '1px solid rgba(59,126,246,0.2)', padding: '11px 14px', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
                   Visit Profile

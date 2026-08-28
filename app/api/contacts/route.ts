@@ -41,9 +41,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, tags, notes } = await req.json()
+  const { id, tags, notes, fbUrl } = await req.json()
   const updated = await db.update(contacts)
-    .set({ tags, notes })
+    .set({ tags, notes, fbUrl })
     .where(eq(contacts.id, id))
     .returning()
   return NextResponse.json(updated[0])

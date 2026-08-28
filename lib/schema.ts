@@ -6,6 +6,7 @@ export const contacts = pgTable('contacts', {
   source: text('source'),           // 'friend' | 'follower' | 'both' | 'linkedin'
   tags: text('tags').array(),
   notes: text('notes'),
+  fbUrl: text('fb_url'),
   engCount: integer('eng_count').default(0),
   lastEngaged: date('last_engaged'),
   queuePos: integer('queue_pos'),
