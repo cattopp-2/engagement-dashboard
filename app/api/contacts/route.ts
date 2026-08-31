@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   } else if (tag === 'untagged') {
     whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`
   } else if (tag && tag !== 'all') {
-    whereClause = sql`${nameFilter}tags @> ARRAY[${tag}]::text[]`
+    whereClause = sql`${nameFilter}tags @> ARRAY[${tag}]::text[] AND (excluded = 0 OR excluded IS NULL)`
   } else {
     whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL) AND (eng_count = 0 OR eng_count IS NULL) AND NOT (tags @> ARRAY['to-check']::text[])`
   }
