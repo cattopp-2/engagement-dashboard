@@ -195,6 +195,9 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
         <div style={{ fontSize: 11, color: '#8892B0' }}>
           {totalCount.toLocaleString()} contacts
         </div>
+        <a href="/leads" style={{ fontSize: 12, fontWeight: 500, padding: '5px 12px', borderRadius: 6, border: '1px solid #DDE1ED', background: 'transparent', color: '#4B5270', textDecoration: 'none', flexShrink: 0 }}>
+          Warm & Hot Leads →
+        </a>
       </div>
 
       {/* Progress */}
