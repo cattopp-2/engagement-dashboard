@@ -13,24 +13,22 @@ export async function GET(req: NextRequest) {
 
   const nameFilter = search ? sql`name ILIKE ${'%' + search + '%'} AND ` : sql``
 
-  if (tag === 'excluded') {
+  // Pipeline stage filter takes priority — show all non-excluded contacts with that stage
+  const leadStatus = searchParams.get('leadStatus') || ''
+  if (leadStatus) {
+    whereClause = sql`${nameFilter}lead_status = ${leadStatus} AND (excluded = 0 OR excluded IS NULL)`
+  } else if (tag === 'excluded') {
     whereClause = sql`${nameFilter}excluded = 1`
   } else if (tag === 'engaged') {
     whereClause = sql`${nameFilter}eng_count > 0 AND (excluded = 0 OR excluded IS NULL)`
   } else if (tag === 'untagged') {
     whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`
-  } else if (tag && tag !== 'all') {
-    whereClause = sql`${nameFilter}tags @> ARRAY[${tag}]::text[] AND (excluded = 0 OR excluded IS NULL)`
   } else if (tag === 'pipeline') {
     whereClause = sql`${nameFilter}lead_status IS NOT NULL AND (excluded = 0 OR excluded IS NULL)`
+  } else if (tag && tag !== 'all') {
+    whereClause = sql`${nameFilter}tags @> ARRAY[${tag}]::text[] AND (excluded = 0 OR excluded IS NULL)`
   } else {
     whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL) AND (eng_count = 0 OR eng_count IS NULL) AND NOT (tags @> ARRAY['to-check']::text[])`
-  }
-
-  // Pipeline stage sub-filter
-  const leadStatus = searchParams.get('leadStatus') || ''
-  if (leadStatus) {
-    whereClause = sql`${whereClause} AND lead_status = ${leadStatus}`
   }
 
   // Order: engaged tab sorts by most recent first; everything else by queue order
