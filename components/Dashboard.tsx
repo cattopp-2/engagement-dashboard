@@ -35,7 +35,6 @@ const TAG_FILTERS = [
   { key: 'untagged', label: 'To Be Engaged',      inactiveColor: '#6B7280', inactiveBg: '#F3F4F6' },
   { key: 'engaged',  label: 'Engaged',            inactiveColor: '#16A34A', inactiveBg: '#DCFCE7' },
   { key: 'to-check', label: 'Already Connected',  inactiveColor: '#D97706', inactiveBg: '#FEF3C7' },
-  { key: 'pipeline', label: '🔥 Pipeline',         inactiveColor: '#4B5270', inactiveBg: '#F0F3F9' },
   { key: 'excluded', label: 'Excluded',           inactiveColor: '#4B5270', inactiveBg: '#F0F3F9' },
 ]
 
