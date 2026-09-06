@@ -203,7 +203,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
 
         {/* Focus panel */}
-        <div style={{ width: '54%', flexShrink: 0, padding: '22px 22px 16px', borderRight: '1px solid #DDE1ED', overflowY: 'auto' }}>
+        <div style={{ width: '54%', flexShrink: 0, padding: '22px 22px 16px', borderLeft: '1px solid #DDE1ED', overflowY: 'auto', order: 2 }}>
           {current ? (
             <div style={{ background: '#fff', border: '1px solid #DDE1ED', borderRadius: 10, padding: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
 
@@ -366,7 +366,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
         </div>
 
         {/* Queue panel */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, order: 1 }}>
           <div style={{ padding: '12px 16px 9px', borderBottom: '1px solid #DDE1ED', flexShrink: 0 }}>
             <div style={{ display: 'flex', gap: 7, alignItems: 'center', marginBottom: 8 }}>
               <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name…"
