@@ -227,8 +227,13 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
               </div>
 
               {/* Tags */}
-              <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 7 }}>Tags — click to toggle</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 7 }}>Status</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 14, alignItems: 'center' }}>
+                {(current as any).engCount > 0 && (
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 20, background: '#DCFCE7', color: '#16A34A', border: '1.5px solid #16A34A' }}>
+                    Engaged ✓
+                  </span>
+                )}
                 {TAGS.map(t => {
                   const active = current.tags?.includes(t.key)
                   return (
