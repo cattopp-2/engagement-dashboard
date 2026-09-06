@@ -36,12 +36,20 @@ const STAGE_TABS = [
 
 export default function LeadsDashboard({ initialLeads }: Props) {
   const [leads, setLeads] = useState<Contact[]>(initialLeads)
+  const [allLeads, setAllLeads] = useState<Contact[]>(initialLeads)
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [expanded, setExpanded] = useState<number | null>(null)
   const [editNotes, setEditNotes] = useState<Record<number, string>>({})
   const notesTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({})
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Fetch unfiltered counts whenever leads change
+  async function refreshCounts() {
+    const res = await fetch('/api/leads')
+    const rows: Contact[] = await res.json()
+    setAllLeads(rows)
+  }
 
   useEffect(() => {
     if (searchTimer.current) clearTimeout(searchTimer.current)
@@ -52,6 +60,8 @@ export default function LeadsDashboard({ initialLeads }: Props) {
       const res = await fetch(`/api/leads?${params}`)
       const rows: Contact[] = await res.json()
       setLeads(rows)
+      // Also refresh counts when not searching (so tabs stay accurate)
+      if (!search) refreshCounts()
     }, 300)
   }, [search, activeTab])
 
@@ -63,6 +73,7 @@ export default function LeadsDashboard({ initialLeads }: Props) {
     })
     const updated: Contact = await res.json()
     setLeads(prev => prev.map(l => l.id === id ? updated : l))
+    refreshCounts()
   }
 
   function handleNotesChange(id: number, val: string) {
@@ -97,7 +108,7 @@ export default function LeadsDashboard({ initialLeads }: Props) {
         {/* Pipeline stage tabs */}
         <div style={{ display: 'flex', gap: 2, padding: '0 18px', overflowX: 'auto' }}>
           {STAGE_TABS.map(tab => {
-            const count = tab.value === 'all' ? initialLeads.length : initialLeads.filter(l => l.leadStatus === tab.value).length
+            const count = tab.value === 'all' ? allLeads.length : allLeads.filter(l => l.leadStatus === tab.value).length
             const s = statusMap[tab.value]
             const isActive = activeTab === tab.value
             return (
