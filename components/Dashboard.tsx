@@ -37,18 +37,12 @@ const SOURCE_STYLES: Record<string, { bg: string; color: string; label: string }
 }
 
 const TAG_FILTERS = [
-  { key: 'all',      label: 'All' },
-  { key: 'untagged', label: 'Untagged' },
-  { key: 'icp',      label: 'ICP' },
-  { key: 'coach',    label: 'Coach' },
-  { key: 'warm',     label: 'Warm' },
-  { key: 'peer',     label: 'Peer' },
-  { key: 'client',   label: 'Client' },
-  { key: 'va',       label: 'VA/OBM' },
-  { key: 'engaged',  label: 'Engaged' },
-  { key: 'to-check', label: 'To Check' },
-  { key: 'pipeline', label: '🔥 Pipeline' },
-  { key: 'excluded', label: 'Excluded' },
+  { key: 'all',      label: 'All',                inactiveColor: '#4B5270', inactiveBg: '#F0F3F9' },
+  { key: 'untagged', label: 'To Be Engaged',      inactiveColor: '#6B7280', inactiveBg: '#F3F4F6' },
+  { key: 'engaged',  label: 'Engaged',            inactiveColor: '#16A34A', inactiveBg: '#DCFCE7' },
+  { key: 'to-check', label: 'Already Connected',  inactiveColor: '#D97706', inactiveBg: '#FEF3C7' },
+  { key: 'pipeline', label: '🔥 Pipeline',         inactiveColor: '#4B5270', inactiveBg: '#F0F3F9' },
+  { key: 'excluded', label: 'Excluded',           inactiveColor: '#4B5270', inactiveBg: '#F0F3F9' },
 ]
 
 interface Props {
@@ -386,10 +380,10 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                 const count = tagCounts[f.key]
                 return (
                   <button key={f.key} onClick={() => { setActiveFilter(f.key); setActivePipeline('') }}
-                    style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, border: '1px solid', borderColor: isActive ? '#3B7EF6' : '#DDE1ED', background: isActive ? '#3B7EF6' : '#F0F3F9', color: isActive ? '#fff' : '#4B5270', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.12s', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, border: '1px solid', borderColor: isActive ? '#3B7EF6' : '#DDE1ED', background: isActive ? '#3B7EF6' : f.inactiveBg, color: isActive ? '#fff' : f.inactiveColor, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.12s', display: 'flex', alignItems: 'center', gap: 5 }}>
                     {f.label}
                     {count !== undefined && count > 0 && (
-                      <span style={{ fontSize: 10, fontWeight: 700, lineHeight: 1, padding: '1px 5px', borderRadius: 10, background: isActive ? 'rgba(255,255,255,0.25)' : '#DDE1ED', color: isActive ? '#fff' : '#4B5270' }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, lineHeight: 1, padding: '1px 5px', borderRadius: 10, background: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.08)', color: isActive ? '#fff' : f.inactiveColor }}>
                         {count}
                       </span>
                     )}

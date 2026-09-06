@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
   // Return tag counts if requested
   if (searchParams.get('counts') === 'tags') {
     const [allRow, untaggedRow, engagedRow, pipelineRow, excludedRow, icpRow, coachRow, warmRow, peerRow, clientRow, vaRow, toCheckRow] = await Promise.all([
-      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE (excluded = 0 OR excluded IS NULL)`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE (excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE eng_count > 0 AND (excluded = 0 OR excluded IS NULL)`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE lead_status IS NOT NULL`),
