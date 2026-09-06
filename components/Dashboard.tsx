@@ -23,7 +23,7 @@ const PIPELINE_STAGES = [
   { value: 'booked-discovery-call',label: 'Booked Discovery Call', color: '#7C3AED', bg: '#EDE9FE' },
   { value: 'proposal-sent',        label: 'Proposal Sent',         color: '#BE185D', bg: '#FCE7F3' },
   { value: 'follow-up',            label: 'Follow Up',             color: '#DC2626', bg: '#FEE2E2' },
-  { value: 'closed',               label: 'Closed / Won',          color: '#16A34A', bg: '#DCFCE7' },
+  { value: 'closed',               label: 'Clients',               color: '#16A34A', bg: '#DCFCE7' },
   { value: 'not-suitable',         label: 'Not Suitable',          color: '#6B7280', bg: '#F3F4F6' },
 ]
 
@@ -63,6 +63,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
   const [activePipeline, setActivePipeline] = useState('')
+  const [pipelineCounts, setPipelineCounts] = useState<Record<string, number>>({})
   const [todayCount, setTodayCount] = useState(0)
   const [totalEngaged, setTotalEngaged] = useState(initEngaged)
   const [flash, setFlash] = useState(false)
@@ -76,6 +77,14 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const current = contacts.find(c => c.id === currentId) ?? null
+
+  useEffect(() => {
+    fetch('/api/contacts?counts=1')
+      .then(r => r.json())
+      .then((rows: { lead_status: string; count: number }[]) => {
+        setPipelineCounts(Object.fromEntries(rows.map(r => [r.lead_status, r.count])))
+      })
+  }, [])
 
   useEffect(() => {
     if (current) {
@@ -377,12 +386,21 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
             </div>
             {/* Pipeline stage filters — shown when Pipeline tab active or always */}
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {PIPELINE_STAGES.map(s => (
-                <button key={s.value} onClick={() => { setActivePipeline(activePipeline === s.value ? '' : s.value); setActiveFilter('pipeline') }}
-                  style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 20, border: '1px solid', borderColor: activePipeline === s.value ? s.color : '#DDE1ED', background: activePipeline === s.value ? s.bg : 'transparent', color: activePipeline === s.value ? s.color : '#8892B0', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.12s' }}>
-                  {s.label}
-                </button>
-              ))}
+              {PIPELINE_STAGES.map(s => {
+                const count = pipelineCounts[s.value] ?? 0
+                const isActive = activePipeline === s.value
+                return (
+                  <button key={s.value} onClick={() => { setActivePipeline(isActive ? '' : s.value); setActiveFilter('pipeline') }}
+                    style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 20, border: '1px solid', borderColor: isActive ? s.color : '#DDE1ED', background: isActive ? s.bg : 'transparent', color: isActive ? s.color : '#8892B0', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.12s', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {s.label}
+                    {count > 0 && (
+                      <span style={{ fontSize: 9, fontWeight: 700, padding: '0px 4px', borderRadius: 8, background: isActive ? s.color : '#DDE1ED', color: isActive ? '#fff' : '#4B5270', minWidth: 14, textAlign: 'center' }}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </div>
 

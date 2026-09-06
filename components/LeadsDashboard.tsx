@@ -11,7 +11,7 @@ const STATUSES = [
   { value: 'booked-discovery-call', label: 'Booked Discovery Call',  color: '#7C3AED', bg: '#EDE9FE' },
   { value: 'proposal-sent',         label: 'Proposal Sent',          color: '#BE185D', bg: '#FCE7F3' },
   { value: 'follow-up',      label: 'Follow Up',        color: '#DC2626', bg: '#FEE2E2' },
-  { value: 'closed',         label: 'Closed / Won',     color: '#16A34A', bg: '#DCFCE7' },
+  { value: 'closed',         label: 'Clients',           color: '#16A34A', bg: '#DCFCE7' },
   { value: 'not-suitable',   label: 'Not Suitable',     color: '#6B7280', bg: '#F3F4F6' },
 ]
 

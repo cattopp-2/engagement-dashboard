@@ -31,6 +31,12 @@ export async function GET(req: NextRequest) {
     whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL) AND (eng_count = 0 OR eng_count IS NULL) AND NOT (tags @> ARRAY['to-check']::text[])`
   }
 
+  // Return pipeline counts if requested
+  if (searchParams.get('counts') === '1') {
+    const rows = await db.execute(sql`SELECT lead_status, COUNT(*)::int AS count FROM contacts WHERE lead_status IS NOT NULL GROUP BY lead_status`)
+    return NextResponse.json(rows.rows)
+  }
+
   // Order: engaged tab sorts by most recent first; everything else by queue order
   const orderClause = tag === 'engaged'
     ? sql`last_engaged DESC NULLS LAST`
