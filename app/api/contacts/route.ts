@@ -21,8 +21,16 @@ export async function GET(req: NextRequest) {
     whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`
   } else if (tag && tag !== 'all') {
     whereClause = sql`${nameFilter}tags @> ARRAY[${tag}]::text[] AND (excluded = 0 OR excluded IS NULL)`
+  } else if (tag === 'pipeline') {
+    whereClause = sql`${nameFilter}lead_status IS NOT NULL AND (excluded = 0 OR excluded IS NULL)`
   } else {
     whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL) AND (eng_count = 0 OR eng_count IS NULL) AND NOT (tags @> ARRAY['to-check']::text[])`
+  }
+
+  // Pipeline stage sub-filter
+  const leadStatus = searchParams.get('leadStatus') || ''
+  if (leadStatus) {
+    whereClause = sql`${whereClause} AND lead_status = ${leadStatus}`
   }
 
   // Order: engaged tab sorts by most recent first; everything else by queue order
@@ -39,13 +47,17 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, tags, notes, fbUrl, messengerUrl, excluded, linkedinUrl, linkedinMessages } = await req.json()
+  const { id, tags, notes, fbUrl, messengerUrl, excluded, linkedinUrl, linkedinMessages, leadStatus, whatToSell, futureContact, isHotLead } = await req.json()
   const updated = await db.update(contacts)
     .set({
       tags, notes, fbUrl, messengerUrl,
       ...(excluded !== undefined ? { excluded: excluded ? 1 : 0 } : {}),
       ...(linkedinUrl !== undefined ? { linkedinUrl } : {}),
       ...(linkedinMessages !== undefined ? { linkedinMessages } : {}),
+      ...(leadStatus !== undefined ? { leadStatus } : {}),
+      ...(whatToSell !== undefined ? { whatToSell } : {}),
+      ...(futureContact !== undefined ? { futureContact } : {}),
+      ...(isHotLead !== undefined ? { isHotLead } : {}),
     })
     .where(eq(contacts.id, id))
     .returning()
