@@ -64,6 +64,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const [activeFilter, setActiveFilter] = useState('all')
   const [activePipeline, setActivePipeline] = useState('')
   const [pipelineCounts, setPipelineCounts] = useState<Record<string, number>>({})
+  const [tagCounts, setTagCounts] = useState<Record<string, number>>({})
   const [todayCount, setTodayCount] = useState(0)
   const [totalEngaged, setTotalEngaged] = useState(initEngaged)
   const [flash, setFlash] = useState(false)
@@ -84,6 +85,9 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
       .then((rows: { lead_status: string; count: number }[]) => {
         setPipelineCounts(Object.fromEntries(rows.map(r => [r.lead_status, r.count])))
       })
+    fetch('/api/contacts?counts=tags')
+      .then(r => r.json())
+      .then((data: Record<string, number>) => setTagCounts(data))
   }, [])
 
   useEffect(() => {
@@ -377,12 +381,21 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
             </div>
             {/* Tag filters */}
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
-              {TAG_FILTERS.map(f => (
-                <button key={f.key} onClick={() => { setActiveFilter(f.key); setActivePipeline('') }}
-                  style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, border: '1px solid', borderColor: activeFilter === f.key && !activePipeline ? '#3B7EF6' : '#DDE1ED', background: activeFilter === f.key && !activePipeline ? '#3B7EF6' : '#F0F3F9', color: activeFilter === f.key && !activePipeline ? '#fff' : '#4B5270', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.12s' }}>
-                  {f.label}
-                </button>
-              ))}
+              {TAG_FILTERS.map(f => {
+                const isActive = activeFilter === f.key && !activePipeline
+                const count = tagCounts[f.key]
+                return (
+                  <button key={f.key} onClick={() => { setActiveFilter(f.key); setActivePipeline('') }}
+                    style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, border: '1px solid', borderColor: isActive ? '#3B7EF6' : '#DDE1ED', background: isActive ? '#3B7EF6' : '#F0F3F9', color: isActive ? '#fff' : '#4B5270', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.12s', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    {f.label}
+                    {count !== undefined && count > 0 && (
+                      <span style={{ fontSize: 10, fontWeight: 700, lineHeight: 1, padding: '1px 5px', borderRadius: 10, background: isActive ? 'rgba(255,255,255,0.25)' : '#DDE1ED', color: isActive ? '#fff' : '#4B5270' }}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
             {/* Pipeline stage filters — shown when Pipeline tab active or always */}
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>

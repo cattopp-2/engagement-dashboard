@@ -37,6 +37,38 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(rows.rows)
   }
 
+  // Return tag counts if requested
+  if (searchParams.get('counts') === 'tags') {
+    const [allRow, untaggedRow, engagedRow, pipelineRow, excludedRow, icpRow, coachRow, warmRow, peerRow, clientRow, vaRow, toCheckRow] = await Promise.all([
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE (excluded = 0 OR excluded IS NULL)`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE (excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE eng_count > 0 AND (excluded = 0 OR excluded IS NULL)`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE lead_status IS NOT NULL`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE excluded = 1`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE tags @> ARRAY['icp']::text[] AND (excluded = 0 OR excluded IS NULL)`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE tags @> ARRAY['coach']::text[] AND (excluded = 0 OR excluded IS NULL)`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE tags @> ARRAY['warm']::text[] AND (excluded = 0 OR excluded IS NULL)`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE tags @> ARRAY['peer']::text[] AND (excluded = 0 OR excluded IS NULL)`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE tags @> ARRAY['client']::text[] AND (excluded = 0 OR excluded IS NULL)`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE tags @> ARRAY['va']::text[] AND (excluded = 0 OR excluded IS NULL)`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE tags @> ARRAY['to-check']::text[] AND (excluded = 0 OR excluded IS NULL)`),
+    ])
+    return NextResponse.json({
+      all:       (allRow.rows[0] as any).count,
+      untagged:  (untaggedRow.rows[0] as any).count,
+      engaged:   (engagedRow.rows[0] as any).count,
+      pipeline:  (pipelineRow.rows[0] as any).count,
+      excluded:  (excludedRow.rows[0] as any).count,
+      icp:       (icpRow.rows[0] as any).count,
+      coach:     (coachRow.rows[0] as any).count,
+      warm:      (warmRow.rows[0] as any).count,
+      peer:      (peerRow.rows[0] as any).count,
+      client:    (clientRow.rows[0] as any).count,
+      va:        (vaRow.rows[0] as any).count,
+      'to-check': (toCheckRow.rows[0] as any).count,
+    })
+  }
+
   // Order: engaged tab sorts by most recent first; everything else by queue order
   const orderClause = tag === 'engaged'
     ? sql`last_engaged DESC NULLS LAST`
