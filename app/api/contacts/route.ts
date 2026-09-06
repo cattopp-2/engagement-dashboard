@@ -13,18 +13,18 @@ export async function GET(req: NextRequest) {
 
   const nameFilter = search ? sql`name ILIKE ${'%' + search + '%'} AND ` : sql``
 
-  // Pipeline stage filter takes priority — show all non-excluded contacts with that stage
+  // Pipeline stage filter takes priority — show ALL contacts with that stage regardless of excluded flag
   const leadStatus = searchParams.get('leadStatus') || ''
   if (leadStatus) {
-    whereClause = sql`${nameFilter}lead_status = ${leadStatus} AND (excluded = 0 OR excluded IS NULL)`
+    whereClause = sql`${nameFilter}lead_status = ${leadStatus}`
+  } else if (tag === 'pipeline') {
+    whereClause = sql`${nameFilter}lead_status IS NOT NULL`
   } else if (tag === 'excluded') {
     whereClause = sql`${nameFilter}excluded = 1`
   } else if (tag === 'engaged') {
     whereClause = sql`${nameFilter}eng_count > 0 AND (excluded = 0 OR excluded IS NULL)`
   } else if (tag === 'untagged') {
     whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`
-  } else if (tag === 'pipeline') {
-    whereClause = sql`${nameFilter}lead_status IS NOT NULL AND (excluded = 0 OR excluded IS NULL)`
   } else if (tag && tag !== 'all') {
     whereClause = sql`${nameFilter}tags @> ARRAY[${tag}]::text[] AND (excluded = 0 OR excluded IS NULL)`
   } else {
