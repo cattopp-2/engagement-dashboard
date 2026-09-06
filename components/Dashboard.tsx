@@ -4,13 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import type { Contact } from '@/lib/schema'
 
 const TAGS = [
-  { key: 'icp',      label: 'ICP',        color: '#16A34A', bg: '#DCFCE7' },
-  { key: 'coach',    label: 'Coach',      color: '#7C3AED', bg: '#EDE9FE' },
-  { key: 'warm',     label: 'Warm Lead',  color: '#B45309', bg: '#FEF3C7' },
-  { key: 'peer',     label: 'Peer',       color: '#0369A1', bg: '#E0F2FE' },
-  { key: 'client',   label: 'Client',     color: '#BE185D', bg: '#FCE7F3' },
-  { key: 'va',       label: 'VA/OBM',     color: '#6B7280', bg: '#F3F4F6' },
-  { key: 'to-check', label: 'To Check',   color: '#D97706', bg: '#FEF3C7' },
+  { key: 'to-check', label: 'Already Connected', color: '#D97706', bg: '#FEF3C7' },
 ]
 
 const TAG_COLOR: Record<string, string> = Object.fromEntries(TAGS.map(t => [t.key, t.color]))
@@ -374,7 +368,8 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
               </span>
             </div>
             {/* Tag filters */}
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>Tags</div>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
               {TAG_FILTERS.map(f => {
                 const isActive = activeFilter === f.key && !activePipeline
                 const count = tagCounts[f.key]
@@ -391,7 +386,8 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                 )
               })}
             </div>
-            {/* Pipeline stage filters — shown when Pipeline tab active or always */}
+            {/* Pipeline stage filters */}
+            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>Pipeline Stage</div>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               {PIPELINE_STAGES.map(s => {
                 const count = pipelineCounts[s.value] ?? 0
