@@ -54,6 +54,9 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const [notes, setNotes] = useState('')
   const [fbUrl, setFbUrl] = useState('')
   const [messengerUrl, setMessengerUrl] = useState('')
+  const [linkedinUrl, setLinkedinUrl] = useState('')
+  const [linkedinMessages, setLinkedinMessages] = useState('')
+  const liMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const current = contacts.find(c => c.id === currentId) ?? null
@@ -63,6 +66,8 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
       setNotes(current.notes ?? '')
       setFbUrl(current.fbUrl ?? '')
       setMessengerUrl((current as any).messengerUrl ?? '')
+      setLinkedinUrl((current as any).linkedinUrl ?? '')
+      setLinkedinMessages((current as any).linkedinMessages ?? '')
     }
   }, [currentId])
 
@@ -179,6 +184,30 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
     setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
   }
 
+  async function saveLinkedinUrl(val: string) {
+    if (!current) return
+    const res = await fetch('/api/contacts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: current.id, tags: current.tags, notes: current.notes, linkedinUrl: val }),
+    })
+    const updated: Contact = await res.json()
+    setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
+  }
+
+  function handleLinkedinMessagesChange(val: string) {
+    setLinkedinMessages(val)
+    if (liMsgTimer.current) clearTimeout(liMsgTimer.current)
+    liMsgTimer.current = setTimeout(async () => {
+      if (!current) return
+      await fetch('/api/contacts', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: current.id, tags: current.tags, notes: current.notes, linkedinMessages: val }),
+      })
+    }, 800)
+  }
+
   const initials = (name: string) => name.split(' ').map(w => w[0]).slice(0, 2).join('')
 
   return (
@@ -262,6 +291,29 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                   <input type="url" value={messengerUrl} onChange={e => setMessengerUrl(e.target.value)} onBlur={e => saveMessengerUrl(e.target.value)} placeholder="facebook.com/messages/…"
                     style={{ width: '100%', background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '8px 10px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
+              </div>
+
+              {/* LinkedIn profile */}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>LinkedIn Profile</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input type="url" value={linkedinUrl} onChange={e => setLinkedinUrl(e.target.value)} onBlur={e => saveLinkedinUrl(e.target.value)} placeholder="https://linkedin.com/in/…"
+                    style={{ flex: 1, background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '8px 10px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', outline: 'none', boxSizing: 'border-box' }} />
+                  {linkedinUrl && (
+                    <a href={linkedinUrl} target="_blank" rel="noreferrer"
+                      style={{ fontSize: 11, fontWeight: 600, padding: '8px 12px', borderRadius: 7, background: '#E3F0FB', color: '#0288D1', textDecoration: 'none', border: '1px solid #B3D9F5', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      Open ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* LinkedIn messages */}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>LinkedIn Messages</div>
+                <textarea value={linkedinMessages} onChange={e => handleLinkedinMessagesChange(e.target.value)}
+                  placeholder="Paste your LI message thread here…"
+                  style={{ width: '100%', minHeight: 80, background: '#F0F3F9', border: '1px solid #B3D9F5', borderRadius: 7, padding: '9px 11px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', resize: 'vertical', outline: 'none', lineHeight: 1.5, boxSizing: 'border-box' }} />
               </div>
 
               {/* Notes */}

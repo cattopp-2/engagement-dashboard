@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, leadStatus, isHotLead, notes, linkedinUrl, threadsUrl, fbUrl, messengerUrl, email, whatToSell, lastContact, futureContact } = await req.json()
+  const { id, leadStatus, isHotLead, notes, linkedinUrl, threadsUrl, fbUrl, messengerUrl, email, whatToSell, lastContact, futureContact, linkedinMessages } = await req.json()
 
   const tags = isHotLead !== undefined
     ? (isHotLead ? ['warm', 'hot'] : ['warm'])
@@ -41,6 +41,7 @@ export async function PATCH(req: NextRequest) {
       ...(whatToSell !== undefined && { whatToSell }),
       ...(lastContact !== undefined && { lastContact }),
       ...(futureContact !== undefined && { futureContact }),
+      ...(linkedinMessages !== undefined && { linkedinMessages }),
     })
     .where(eq(contacts.id, id))
     .returning()

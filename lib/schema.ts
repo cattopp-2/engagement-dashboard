@@ -22,6 +22,7 @@ export const contacts = pgTable('contacts', {
   whatToSell: text('what_to_sell'),
   lastContact: date('last_contact'),
   futureContact: date('future_contact'),
+  linkedinMessages: text('linkedin_messages'),
 })
 
 export type Contact = typeof contacts.$inferSelect

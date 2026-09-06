@@ -39,9 +39,14 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, tags, notes, fbUrl, messengerUrl, excluded } = await req.json()
+  const { id, tags, notes, fbUrl, messengerUrl, excluded, linkedinUrl, linkedinMessages } = await req.json()
   const updated = await db.update(contacts)
-    .set({ tags, notes, fbUrl, messengerUrl, ...(excluded !== undefined ? { excluded: excluded ? 1 : 0 } : {}) })
+    .set({
+      tags, notes, fbUrl, messengerUrl,
+      ...(excluded !== undefined ? { excluded: excluded ? 1 : 0 } : {}),
+      ...(linkedinUrl !== undefined ? { linkedinUrl } : {}),
+      ...(linkedinMessages !== undefined ? { linkedinMessages } : {}),
+    })
     .where(eq(contacts.id, id))
     .returning()
   return NextResponse.json(updated[0])

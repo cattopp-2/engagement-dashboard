@@ -7,8 +7,9 @@ const STATUSES = [
   { value: 'to-contact',     label: 'To Contact',      color: '#8892B0', bg: '#F0F3F9' },
   { value: 'contacted',      label: 'Contacted',        color: '#0369A1', bg: '#E0F2FE' },
   { value: 'replied',        label: 'Replied',          color: '#7C3AED', bg: '#EDE9FE' },
-  { value: 'in-conversation',label: 'In Conversation',  color: '#B45309', bg: '#FEF3C7' },
-  { value: 'proposal-sent',  label: 'Proposal Sent',    color: '#BE185D', bg: '#FCE7F3' },
+  { value: 'in-conversation',       label: 'In Conversation',       color: '#B45309', bg: '#FEF3C7' },
+  { value: 'booked-discovery-call', label: 'Booked Discovery Call',  color: '#7C3AED', bg: '#EDE9FE' },
+  { value: 'proposal-sent',         label: 'Proposal Sent',          color: '#BE185D', bg: '#FCE7F3' },
   { value: 'follow-up',      label: 'Follow Up',        color: '#DC2626', bg: '#FEE2E2' },
   { value: 'closed',         label: 'Closed / Won',     color: '#16A34A', bg: '#DCFCE7' },
   { value: 'not-suitable',   label: 'Not Suitable',     color: '#6B7280', bg: '#F3F4F6' },
@@ -23,8 +24,9 @@ interface Props {
 const STAGE_TABS = [
   { value: 'all',            label: 'All' },
   { value: 'follow-up',     label: 'Follow Up' },
-  { value: 'in-conversation', label: 'In Conversation' },
-  { value: 'proposal-sent', label: 'Proposal Sent' },
+  { value: 'in-conversation',       label: 'In Conversation' },
+  { value: 'booked-discovery-call', label: 'Booked Discovery Call' },
+  { value: 'proposal-sent',         label: 'Proposal Sent' },
   { value: 'replied',       label: 'Replied' },
   { value: 'contacted',     label: 'Contacted' },
   { value: 'to-contact',    label: 'To Contact' },
@@ -210,11 +212,29 @@ function LeadCard({ lead, expanded, onToggle, notes, onNotesChange, onUpdate }: 
             </button>
           </div>
 
+          {/* LinkedIn profile link */}
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>LinkedIn Profile</div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input type="url" defaultValue={lead.linkedinUrl ?? ''} onBlur={e => onUpdate({ linkedinUrl: e.target.value })}
+                placeholder="https://linkedin.com/in/…"
+                style={{ flex: 1, background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '7px 10px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', outline: 'none', boxSizing: 'border-box' }} />
+              {lead.linkedinUrl && (
+                <a href={lead.linkedinUrl} target="_blank" rel="noreferrer"
+                  style={{ fontSize: 11, fontWeight: 600, padding: '6px 12px', borderRadius: 7, background: '#E3F0FB', color: '#0288D1', textDecoration: 'none', border: '1px solid #B3D9F5', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  Open ↗
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* LinkedIn messages */}
+          <LiMessagesField value={(lead as any).linkedinMessages ?? ''} onSave={val => onUpdate({ linkedinMessages: val })} />
+
           {/* Social links — editable */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <UrlField label="FB Profile" value={lead.fbUrl ?? ''} onChange={val => onUpdate({ fbUrl: val })} />
             <UrlField label="Messenger" value={lead.messengerUrl ?? ''} onChange={val => onUpdate({ messengerUrl: val })} />
-            <UrlField label="LinkedIn" value={lead.linkedinUrl ?? ''} onChange={val => onUpdate({ linkedinUrl: val })} />
             <UrlField label="Threads" value={lead.threadsUrl ?? ''} onChange={val => onUpdate({ threadsUrl: val })} />
           </div>
 
@@ -288,6 +308,26 @@ function UrlField({ label, value, onChange }: { label: string; value: string; on
       <input type="url" value={local} onChange={e => setLocal(e.target.value)} onBlur={() => onChange(local)}
         placeholder="https://…"
         style={{ width: '100%', background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '7px 10px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', outline: 'none', boxSizing: 'border-box' }} />
+    </div>
+  )
+}
+
+function LiMessagesField({ value, onSave }: { value: string; onSave: (val: string) => void }) {
+  const [local, setLocal] = useState(value)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleChange(val: string) {
+    setLocal(val)
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => onSave(val), 800)
+  }
+
+  return (
+    <div>
+      <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>LinkedIn Messages</div>
+      <textarea value={local} onChange={e => handleChange(e.target.value)}
+        placeholder="Paste your LI message thread here…"
+        style={{ width: '100%', minHeight: 100, background: '#F0F3F9', border: '1px solid #B3D9F5', borderRadius: 7, padding: '9px 11px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', resize: 'vertical', outline: 'none', lineHeight: 1.5, boxSizing: 'border-box' }} />
     </div>
   )
 }
