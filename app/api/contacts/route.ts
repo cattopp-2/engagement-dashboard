@@ -87,6 +87,8 @@ export async function POST(req: NextRequest) {
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
   const created = await db.insert(contacts).values({
     name: name.trim(),
+    engCount: 0,
+    excluded: 0,
     ...(fbUrl ? { fbUrl } : {}),
     ...(messengerUrl ? { messengerUrl } : {}),
     ...(linkedinUrl ? { linkedinUrl } : {}),
