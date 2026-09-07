@@ -82,6 +82,21 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(rows)
 }
 
+export async function POST(req: NextRequest) {
+  const { name, fbUrl, messengerUrl, linkedinUrl, threadsUrl, leadStatus, notes } = await req.json()
+  if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
+  const created = await db.insert(contacts).values({
+    name: name.trim(),
+    ...(fbUrl ? { fbUrl } : {}),
+    ...(messengerUrl ? { messengerUrl } : {}),
+    ...(linkedinUrl ? { linkedinUrl } : {}),
+    ...(threadsUrl ? { threadsUrl } : {}),
+    ...(leadStatus ? { leadStatus } : {}),
+    ...(notes ? { notes } : {}),
+  }).returning()
+  return NextResponse.json(created[0])
+}
+
 export async function PATCH(req: NextRequest) {
   const { id, tags, notes, fbUrl, messengerUrl, excluded, linkedinUrl, linkedinMessages, leadStatus, whatToSell, futureContact, isHotLead } = await req.json()
   const updated = await db.update(contacts)
