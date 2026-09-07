@@ -243,21 +243,45 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                 </div>
               </div>
 
-              {/* Tags */}
+              {/* Status toggles */}
               <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 7 }}>Status</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 14, alignItems: 'center' }}>
-                {((current as any).engCount ?? 0) > 0 && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 20, background: '#DCFCE7', color: '#16A34A', border: '1.5px solid #16A34A' }}>
-                    Engaged ✓
-                    <button onClick={() => patchContact(current.id, { engCount: 0 })} title="Clear engagement"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#16A34A', padding: 0, lineHeight: 1, fontSize: 13, fontWeight: 700, opacity: 0.6 }}>×</button>
-                  </span>
-                )}
-                {TAGS.map(t => {
-                  const active = current.tags?.includes(t.key)
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 14 }}>
+                {[
+                  { key: 'to-be-engaged',    label: 'To Be Engaged',     color: '#6B7280', bg: '#F3F4F6' },
+                  { key: 'engaged',          label: 'Engaged',           color: '#16A34A', bg: '#DCFCE7' },
+                  { key: 'already-connected',label: 'Already Connected', color: '#D97706', bg: '#FEF3C7' },
+                  { key: 'excluded',         label: 'Excluded',          color: '#DC2626', bg: '#FEE2E2' },
+                ].map(s => {
+                  const engCount = (current as any).engCount ?? 0
+                  const isExcluded = !!(current as any).excluded
+                  const hasToCheck = current.tags?.includes('to-check')
+                  const active =
+                    s.key === 'excluded'          ? isExcluded :
+                    s.key === 'engaged'           ? (!isExcluded && engCount > 0) :
+                    s.key === 'already-connected' ? (!isExcluded && !!hasToCheck) :
+                    /* to-be-engaged */             (!isExcluded && engCount === 0 && !hasToCheck)
+
+                  function handleClick() {
+                    if (active && s.key === 'to-be-engaged') return // already neutral, nothing to do
+                    if (active) {
+                      // clicking active → go back to neutral (to-be-engaged)
+                      patchContact(current.id, { excluded: 0, engCount: 0, tags: [] })
+                    } else if (s.key === 'to-be-engaged') {
+                      patchContact(current.id, { excluded: 0, engCount: 0, tags: [] })
+                    } else if (s.key === 'engaged') {
+                      patchContact(current.id, { excluded: 0, engCount: 1, tags: current.tags?.filter((t: string) => t !== 'to-check') ?? [] })
+                    } else if (s.key === 'already-connected') {
+                      const newTags = [...(current.tags?.filter((t: string) => t !== 'to-check') ?? []), 'to-check']
+                      patchContact(current.id, { excluded: 0, engCount: 0, tags: newTags })
+                    } else if (s.key === 'excluded') {
+                      patchContact(current.id, { excluded: 1, engCount: 0, tags: [] })
+                    }
+                  }
+
                   return (
-                    <button key={t.key} onClick={() => toggleTag(current.id, t.key)} style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, cursor: 'pointer', border: `1.5px solid ${active ? t.color : '#DDE1ED'}`, background: active ? t.bg : '#F0F3F9', color: active ? t.color : '#8892B0', fontFamily: 'inherit', transition: 'all 0.12s' }}>
-                      {t.label}
+                    <button key={s.key} onClick={handleClick}
+                      style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, cursor: 'pointer', border: `1.5px solid ${active ? s.color : '#DDE1ED'}`, background: active ? s.bg : '#F0F3F9', color: active ? s.color : '#8892B0', fontFamily: 'inherit', transition: 'all 0.12s' }}>
+                      {s.label}
                     </button>
                   )
                 })}
