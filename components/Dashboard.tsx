@@ -246,7 +246,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
               {/* Tags */}
               <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 7 }}>Status</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 14, alignItems: 'center' }}>
-                {(current as any).engCount > 0 && (
+                {((current as any).engCount ?? 0) > 0 && (
                   <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 20, background: '#DCFCE7', color: '#16A34A', border: '1.5px solid #16A34A' }}>
                     Engaged ✓
                   </span>
@@ -254,7 +254,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                 {TAGS.map(t => {
                   const active = current.tags?.includes(t.key)
                   return (
-                    <button key={t.key} onClick={() => toggleTag(current.id, t.key)} style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, cursor: 'pointer', border: active ? `1.5px solid ${t.color}` : '1.5px solid transparent', background: t.bg, color: t.color, fontFamily: 'inherit', transition: 'opacity 0.12s' }}>
+                    <button key={t.key} onClick={() => toggleTag(current.id, t.key)} style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, cursor: 'pointer', border: `1.5px solid ${active ? t.color : '#DDE1ED'}`, background: active ? t.bg : '#F0F3F9', color: active ? t.color : '#8892B0', fontFamily: 'inherit', transition: 'all 0.12s' }}>
                       {t.label}
                     </button>
                   )
