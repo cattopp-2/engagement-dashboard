@@ -100,10 +100,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, tags, notes, fbUrl, messengerUrl, excluded, linkedinUrl, linkedinMessages, leadStatus, whatToSell, futureContact, isHotLead } = await req.json()
+  const { id, tags, notes, fbUrl, messengerUrl, excluded, linkedinUrl, linkedinMessages, leadStatus, whatToSell, futureContact, isHotLead, engCount } = await req.json()
   const updated = await db.update(contacts)
     .set({
       tags, notes, fbUrl, messengerUrl,
+      ...(engCount !== undefined ? { engCount } : {}),
       ...(excluded !== undefined ? { excluded: excluded ? 1 : 0 } : {}),
       ...(linkedinUrl !== undefined ? { linkedinUrl } : {}),
       ...(linkedinMessages !== undefined ? { linkedinMessages } : {}),
