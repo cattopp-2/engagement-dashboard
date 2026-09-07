@@ -52,6 +52,9 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const [activePipeline, setActivePipeline] = useState('')
   const [pipelineCounts, setPipelineCounts] = useState<Record<string, number>>({})
   const [tagCounts, setTagCounts] = useState<Record<string, number>>({})
+  const [showAdd, setShowAdd] = useState(false)
+  const [addForm, setAddForm] = useState({ name: '', linkedinUrl: '', fbUrl: '', messengerUrl: '', threadsUrl: '', leadStatus: 'to-contact', notes: '' })
+  const [addSaving, setAddSaving] = useState(false)
   const [todayCount, setTodayCount] = useState(0)
   const [totalEngaged, setTotalEngaged] = useState(initEngaged)
   const [flash, setFlash] = useState(false)
@@ -102,6 +105,21 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   }, [search, activeFilter, activePipeline])
 
   const filtered = contacts
+
+  async function saveNewLead() {
+    if (!addForm.name.trim()) return
+    setAddSaving(true)
+    const res = await fetch('/api/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(addForm),
+    })
+    const created: Contact = await res.json()
+    setContacts(prev => [created, ...prev])
+    setAddForm({ name: '', linkedinUrl: '', fbUrl: '', messengerUrl: '', threadsUrl: '', leadStatus: 'to-contact', notes: '' })
+    setShowAdd(false)
+    setAddSaving(false)
+  }
 
   async function patchContact(id: number, patch: Record<string, any>) {
     const contact = contacts.find(c => c.id === id)
@@ -370,6 +388,9 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
               <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#8892B0', whiteSpace: 'nowrap' }}>
                 {filtered.length.toLocaleString()} people
               </span>
+              <button onClick={() => setShowAdd(true)} style={{ fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 7, background: '#3B7EF6', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                + Add Lead
+              </button>
             </div>
             {/* Tag filters */}
             <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>Tags</div>
@@ -439,6 +460,61 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
           </div>
         </div>
       </div>
+
+      {/* Add Lead modal */}
+      {showAdd && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowAdd(false) }}>
+          <div style={{ background: '#fff', borderRadius: 14, padding: 28, width: '100%', maxWidth: 480, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ fontWeight: 700, fontSize: 16 }}>Add New Lead</div>
+
+            <AddField label="Name *" value={addForm.name} onChange={v => setAddForm(f => ({ ...f, name: v }))} placeholder="Full name" />
+            <AddField label="LinkedIn URL" value={addForm.linkedinUrl} onChange={v => setAddForm(f => ({ ...f, linkedinUrl: v }))} placeholder="https://linkedin.com/in/…" />
+            <AddField label="FB Profile URL" value={addForm.fbUrl} onChange={v => setAddForm(f => ({ ...f, fbUrl: v }))} placeholder="https://facebook.com/…" />
+            <AddField label="Messenger URL" value={addForm.messengerUrl} onChange={v => setAddForm(f => ({ ...f, messengerUrl: v }))} placeholder="https://m.me/…" />
+            <AddField label="Threads URL" value={addForm.threadsUrl} onChange={v => setAddForm(f => ({ ...f, threadsUrl: v }))} placeholder="https://threads.net/…" />
+
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>Pipeline Stage</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {PIPELINE_STAGES.map(s => (
+                  <button key={s.value} onClick={() => setAddForm(f => ({ ...f, leadStatus: s.value }))}
+                    style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, cursor: 'pointer', border: addForm.leadStatus === s.value ? `1.5px solid ${s.color}` : '1.5px solid transparent', background: s.bg, color: s.color, fontFamily: 'inherit' }}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>Notes</div>
+              <textarea value={addForm.notes} onChange={e => setAddForm(f => ({ ...f, notes: e.target.value }))}
+                placeholder="Any context about this person…"
+                style={{ width: '100%', minHeight: 70, background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '8px 10px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowAdd(false)} style={{ fontSize: 13, fontWeight: 500, padding: '8px 16px', borderRadius: 7, border: '1px solid #DDE1ED', background: '#F0F3F9', color: '#4B5270', cursor: 'pointer', fontFamily: 'inherit' }}>
+                Cancel
+              </button>
+              <button onClick={saveNewLead} disabled={!addForm.name.trim() || addSaving}
+                style={{ fontSize: 13, fontWeight: 600, padding: '8px 20px', borderRadius: 7, border: 'none', background: addForm.name.trim() ? '#3B7EF6' : '#DDE1ED', color: addForm.name.trim() ? '#fff' : '#8892B0', cursor: addForm.name.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+                {addSaving ? 'Saving…' : 'Add Lead'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AddField({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <div>
+      <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 4 }}>{label}</div>
+      <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        style={{ width: '100%', background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '7px 10px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', outline: 'none', boxSizing: 'border-box' }} />
     </div>
   )
 }
