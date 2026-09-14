@@ -239,6 +239,27 @@ function LeadCard({ lead, expanded, onToggle, notes, onNotesChange, onUpdate }: 
   onUpdate: (patch: Partial<Contact>) => void
 }) {
   const status = statusMap[lead.leadStatus ?? ''] ?? statusMap['to-contact']
+  const [editingName, setEditingName] = useState(false)
+  const [nameVal, setNameVal] = useState(lead.name)
+  const nameRef = useRef<HTMLInputElement>(null)
+
+  function startEditName(e: React.MouseEvent) {
+    e.stopPropagation()
+    setEditingName(true)
+    setTimeout(() => nameRef.current?.select(), 0)
+  }
+
+  function saveName() {
+    const trimmed = nameVal.trim()
+    if (trimmed && trimmed !== lead.name) onUpdate({ name: trimmed })
+    else setNameVal(lead.name)
+    setEditingName(false)
+  }
+
+  function handleNameKey(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') saveName()
+    if (e.key === 'Escape') { setNameVal(lead.name); setEditingName(false) }
+  }
 
   return (
     <div style={{ background: '#fff', border: '1px solid #DDE1ED', borderRadius: 10, overflow: 'hidden', boxShadow: lead.isHotLead ? '0 0 0 2px rgba(220,38,38,0.15)' : 'none' }}>
@@ -246,10 +267,28 @@ function LeadCard({ lead, expanded, onToggle, notes, onNotesChange, onUpdate }: 
       {/* Summary row */}
       <div onClick={onToggle} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', cursor: 'pointer', userSelect: 'none' }}>
         <div style={{ width: 34, height: 34, borderRadius: '50%', background: lead.isHotLead ? 'rgba(220,38,38,0.1)' : 'rgba(59,126,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: lead.isHotLead ? '#DC2626' : '#3B7EF6', flexShrink: 0, fontFamily: 'DM Mono, monospace' }}>
-          {lead.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
+          {nameVal.split(' ').map(w => w[0]).slice(0, 2).join('')}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</div>
+          {editingName ? (
+            <input
+              ref={nameRef}
+              value={nameVal}
+              onChange={e => setNameVal(e.target.value)}
+              onBlur={saveName}
+              onKeyDown={handleNameKey}
+              onClick={e => e.stopPropagation()}
+              style={{ fontWeight: 600, fontSize: 14, border: '1px solid #3B7EF6', borderRadius: 5, padding: '2px 6px', outline: 'none', fontFamily: 'inherit', color: '#1A1F36', width: '100%', boxSizing: 'border-box' }}
+            />
+          ) : (
+            <div
+              onClick={startEditName}
+              title="Click to edit name"
+              style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'text' }}
+            >
+              {nameVal}
+            </div>
+          )}
           {lead.whatToSell && <div style={{ fontSize: 11, color: '#8892B0', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.whatToSell}</div>}
         </div>
         <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 20, background: status.bg, color: status.color, whiteSpace: 'nowrap', flexShrink: 0 }}>
