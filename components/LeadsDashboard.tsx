@@ -295,8 +295,8 @@ function LeadCard({ lead, expanded, onToggle, notes, onNotesChange, onUpdate }: 
           {status.label}
         </span>
         {lead.lastContact && (
-          <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#8892B0', flexShrink: 0 }}>
-            {lead.lastContact}
+          <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#4B5270', flexShrink: 0, background: '#F0F3F9', padding: '2px 6px', borderRadius: 4 }}>
+            Spoke: {lead.lastContact}
           </span>
         )}
         {lead.futureContact && (
@@ -358,8 +358,11 @@ function LeadCard({ lead, expanded, onToggle, notes, onNotesChange, onUpdate }: 
           {/* What to sell */}
           <TextField label="What to offer" value={lead.whatToSell ?? ''} onChange={val => onUpdate({ whatToSell: val })} />
 
-          {/* Future contact date */}
-          <DateField label="Follow-up date" value={lead.futureContact ?? ''} onChange={val => onUpdate({ futureContact: val })} />
+          {/* Conversation dates */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <DateField label="Last conversation" value={lead.lastContact ?? ''} onChange={val => onUpdate({ lastContact: val })} showToday />
+            <DateField label="Follow-up date" value={lead.futureContact ?? ''} onChange={val => onUpdate({ futureContact: val })} />
+          </div>
 
           {/* Notes */}
           <div>
@@ -406,13 +409,29 @@ function TextField({ label, value, onChange }: { label: string; value: string; o
   )
 }
 
-function DateField({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) {
+function DateField({ label, value, onChange, showToday }: { label: string; value: string; onChange: (val: string) => void; showToday?: boolean }) {
   const [local, setLocal] = useState(value)
+
+  useEffect(() => { setLocal(value) }, [value])
+
+  function set(val: string) {
+    setLocal(val)
+    onChange(val)
+  }
+
   return (
     <div>
       <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>{label}</div>
-      <input type="date" value={local} onChange={e => { setLocal(e.target.value); onChange(e.target.value) }}
-        style={{ background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '7px 10px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', outline: 'none' }} />
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <input type="date" value={local} onChange={e => set(e.target.value)}
+          style={{ flex: 1, minWidth: 0, background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '7px 10px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', outline: 'none', boxSizing: 'border-box' }} />
+        {showToday && (
+          <button onClick={() => set(new Date().toISOString().split('T')[0])}
+            style={{ fontSize: 11, fontWeight: 600, padding: '7px 11px', borderRadius: 7, border: '1px solid #B3D9F5', background: '#E3F0FB', color: '#0288D1', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            Today
+          </button>
+        )}
+      </div>
     </div>
   )
 }
