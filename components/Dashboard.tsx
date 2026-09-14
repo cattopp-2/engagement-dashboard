@@ -66,6 +66,9 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const [linkedinMessages, setLinkedinMessages] = useState('')
   const liMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [editingName, setEditingName] = useState(false)
+  const [nameVal, setNameVal] = useState('')
+  const nameRef = useRef<HTMLInputElement>(null)
 
   const current = contacts.find(c => c.id === currentId) ?? null
 
@@ -87,6 +90,8 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
       setMessengerUrl((current as any).messengerUrl ?? '')
       setLinkedinUrl((current as any).linkedinUrl ?? '')
       setLinkedinMessages((current as any).linkedinMessages ?? '')
+      setNameVal(current.name)
+      setEditingName(false)
     }
   }, [currentId])
 
@@ -222,7 +227,33 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                   {initials(current.name)}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.2, marginBottom: 5 }}>{current.name}</div>
+                  {editingName ? (
+                    <input
+                      ref={nameRef}
+                      value={nameVal}
+                      onChange={e => setNameVal(e.target.value)}
+                      onBlur={() => {
+                        const trimmed = nameVal.trim()
+                        if (trimmed && trimmed !== current.name) patchContact(current.id, { name: trimmed })
+                        else setNameVal(current.name)
+                        setEditingName(false)
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                        if (e.key === 'Escape') { setNameVal(current.name); setEditingName(false) }
+                      }}
+                      style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.2, marginBottom: 5, border: '1px solid #3B7EF6', borderRadius: 5, padding: '2px 6px', outline: 'none', fontFamily: 'inherit', color: '#1A1F36', width: '100%', boxSizing: 'border-box' }}
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      onClick={() => { setNameVal(current.name); setEditingName(true); setTimeout(() => nameRef.current?.select(), 0) }}
+                      title="Click to edit name"
+                      style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.2, marginBottom: 5, cursor: 'text' }}
+                    >
+                      {nameVal || current.name}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
                     {current.source && SOURCE_STYLES[current.source] && (
                       <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.07em', background: SOURCE_STYLES[current.source].bg, color: SOURCE_STYLES[current.source].color }}>
