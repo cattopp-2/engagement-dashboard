@@ -293,6 +293,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                     /* to-be-engaged */             (!isExcluded && engCount === 0 && !hasToCheck)
 
                   function handleClick() {
+                    if (!current) return
                     if (active && s.key === 'to-be-engaged') return // already neutral, nothing to do
                     if (active) {
                       // clicking active → go back to neutral (to-be-engaged)
