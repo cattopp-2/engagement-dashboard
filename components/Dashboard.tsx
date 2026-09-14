@@ -338,14 +338,28 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                 </div>
               </div>
 
-              {/* What to offer + Follow-up date */}
+              {/* What to offer */}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>What to offer</div>
+                <input type="text" defaultValue={(current as any).whatToSell ?? ''} key={`wts-${current.id}`}
+                  onBlur={e => patchContact(current.id, { whatToSell: e.target.value })}
+                  placeholder="e.g. Business Brain OS…"
+                  style={{ width: '100%', background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '7px 10px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              {/* Last conversation + Follow-up date */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                <div style={{ flex: 2 }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>What to offer</div>
-                  <input type="text" defaultValue={(current as any).whatToSell ?? ''} key={`wts-${current.id}`}
-                    onBlur={e => patchContact(current.id, { whatToSell: e.target.value })}
-                    placeholder="e.g. Business Brain OS…"
-                    style={{ width: '100%', background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '7px 10px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', outline: 'none', boxSizing: 'border-box' }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>Last conversation</div>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <input type="date" value={(current as any).lastContact ?? ''}
+                      onChange={e => patchContact(current.id, { lastContact: e.target.value || null })}
+                      style={{ flex: 1, minWidth: 0, background: '#F0F3F9', border: '1px solid #DDE1ED', borderRadius: 7, padding: '7px 10px', fontFamily: 'inherit', fontSize: 12, color: '#1A1F36', outline: 'none', boxSizing: 'border-box' }} />
+                    <button onClick={() => patchContact(current.id, { lastContact: new Date().toISOString().split('T')[0] })}
+                      style={{ fontSize: 11, fontWeight: 600, padding: '7px 11px', borderRadius: 7, border: '1px solid #B3D9F5', background: '#E3F0FB', color: '#0288D1', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      Today
+                    </button>
+                  </div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>Follow-up date</div>
