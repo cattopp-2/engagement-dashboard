@@ -19,6 +19,7 @@ const PIPELINE_STAGES = [
   { value: 'follow-up',            label: 'Follow Up',             color: '#DC2626', bg: '#FEE2E2' },
   { value: 'closed',               label: 'Clients',               color: '#16A34A', bg: '#DCFCE7' },
   { value: 'not-suitable',         label: 'Not Suitable',          color: '#6B7280', bg: '#F3F4F6' },
+  { value: 'said-no',              label: 'Said No',               color: '#9CA3AF', bg: '#F9FAFB' },
 ]
 
 const PIPELINE_MAP = Object.fromEntries(PIPELINE_STAGES.map(s => [s.value, s]))

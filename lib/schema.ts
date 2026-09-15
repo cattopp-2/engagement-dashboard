@@ -17,7 +17,7 @@ export const contacts = pgTable('contacts', {
   email: text('email'),
   linkedinUrl: text('linkedin_url'),
   threadsUrl: text('threads_url'),
-  leadStatus: text('lead_status'),  // 'to-contact' | 'contacted' | 'replied' | 'in-conversation' | 'proposal-sent' | 'follow-up' | 'closed' | 'not-suitable'
+  leadStatus: text('lead_status'),  // 'to-contact' | 'contacted' | 'replied' | 'in-conversation' | 'proposal-sent' | 'follow-up' | 'closed' | 'not-suitable' | 'said-no'
   isHotLead: boolean('is_hot_lead').default(false),
   whatToSell: text('what_to_sell'),
   lastContact: date('last_contact'),
