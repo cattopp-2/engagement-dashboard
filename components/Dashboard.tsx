@@ -14,6 +14,7 @@ const PIPELINE_STAGES = [
   { value: 'contacted',            label: 'Contacted',             color: '#0369A1', bg: '#E0F2FE' },
   { value: 'replied',              label: 'Replied',               color: '#7C3AED', bg: '#EDE9FE' },
   { value: 'in-conversation',      label: 'In Conversation',       color: '#B45309', bg: '#FEF3C7' },
+  { value: 'instakit-dm',          label: 'InstaKit DMs',          color: '#C2410C', bg: '#FFEDD5' },
   { value: 'booked-discovery-call',label: 'Booked Discovery Call', color: '#7C3AED', bg: '#EDE9FE' },
   { value: 'proposal-sent',        label: 'Proposal Sent',         color: '#BE185D', bg: '#FCE7F3' },
   { value: 'follow-up',            label: 'Follow Up',             color: '#DC2626', bg: '#FEE2E2' },
