@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
     name: name.trim(),
     engCount: 0,
     excluded: 0,
+    tags: [], // empty, not null, so the new contact reads as To Be Engaged
     ...(fbUrl ? { fbUrl } : {}),
     ...(messengerUrl ? { messengerUrl } : {}),
     ...(linkedinUrl ? { linkedinUrl } : {}),
