@@ -25,6 +25,10 @@ const PIPELINE_STAGES = [
 
 const PIPELINE_MAP = Object.fromEntries(PIPELINE_STAGES.map(s => [s.value, s]))
 
+// A contact can be in several stages. Older records only have the single one.
+const stagesOf = (c: any): string[] =>
+  c?.leadStatuses?.length ? c.leadStatuses : c?.leadStatus ? [c.leadStatus] : []
+
 const SOURCE_STYLES: Record<string, { bg: string; color: string; label: string }> = {
   friend:   { bg: 'rgba(59,126,246,0.10)', color: '#3B7EF6', label: 'Friend' },
   follower: { bg: 'rgba(139,92,246,0.10)', color: '#8B5CF6', label: 'Follower' },
@@ -55,7 +59,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const [pipelineCounts, setPipelineCounts] = useState<Record<string, number>>({})
   const [tagCounts, setTagCounts] = useState<Record<string, number>>({})
   const [showAdd, setShowAdd] = useState(false)
-  const [addForm, setAddForm] = useState({ name: '', linkedinUrl: '', fbUrl: '', messengerUrl: '', threadsUrl: '', leadStatus: 'to-contact', notes: '' })
+  const [addForm, setAddForm] = useState({ name: '', linkedinUrl: '', fbUrl: '', messengerUrl: '', threadsUrl: '', leadStatuses: ['to-contact'] as string[], notes: '' })
   const [addSaving, setAddSaving] = useState(false)
   const [todayCount, setTodayCount] = useState(0)
   const [totalEngaged, setTotalEngaged] = useState(initEngaged)
@@ -124,7 +128,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
     })
     const created: Contact = await res.json()
     setContacts(prev => [created, ...prev])
-    setAddForm({ name: '', linkedinUrl: '', fbUrl: '', messengerUrl: '', threadsUrl: '', leadStatus: 'to-contact', notes: '' })
+    setAddForm({ name: '', linkedinUrl: '', fbUrl: '', messengerUrl: '', threadsUrl: '', leadStatuses: ['to-contact'] as string[], notes: '' })
     setShowAdd(false)
     setAddSaving(false)
   }
@@ -371,12 +375,19 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                   </button>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                  {PIPELINE_STAGES.map(s => (
-                    <button key={s.value} onClick={() => patchContact(current.id, { leadStatus: (current as any).leadStatus === s.value ? null : s.value })}
-                      style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, cursor: 'pointer', border: (current as any).leadStatus === s.value ? `1.5px solid ${s.color}` : '1.5px solid transparent', background: s.bg, color: s.color, fontFamily: 'inherit' }}>
-                      {s.label}
-                    </button>
-                  ))}
+                  {PIPELINE_STAGES.map(s => {
+                    const on = stagesOf(current).includes(s.value)
+                    return (
+                      <button key={s.value} onClick={() => {
+                        const now = stagesOf(current)
+                        const next = on ? now.filter(v => v !== s.value) : [...now, s.value]
+                        patchContact(current.id, { leadStatuses: next })
+                      }}
+                        style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, cursor: 'pointer', border: on ? `1.5px solid ${s.color}` : '1.5px solid transparent', background: s.bg, color: s.color, opacity: on ? 1 : 0.55, fontFamily: 'inherit' }}>
+                        {s.label}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -554,17 +565,17 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
           <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
             {filtered.map((c, i) => {
               const isCurrent = c.id === currentId
-              const pipelineStage = (c as any).leadStatus ? PIPELINE_MAP[(c as any).leadStatus] : null
+              const rowStages = stagesOf(c).map(v => PIPELINE_MAP[v]).filter(Boolean)
               return (
                 <div key={c.id} onClick={() => setCurrentId(c.id)}
                   style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 16px', cursor: 'pointer', borderBottom: '1px solid #DDE1ED', background: isCurrent ? 'rgba(59,126,246,0.08)' : 'transparent', borderLeft: isCurrent ? '3px solid #3B7EF6' : '3px solid transparent', paddingLeft: isCurrent ? 13 : 16, minHeight: 40, transition: 'background 0.1s' }}>
                   <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#8892B0', width: 26, flexShrink: 0 }}>{i + 1}</span>
                   <span style={{ flex: 1, fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</span>
-                  {pipelineStage && (
-                    <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 10, background: pipelineStage.bg, color: pipelineStage.color, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {pipelineStage.label}
+                  {rowStages.map(st => (
+                    <span key={st.value} style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 10, background: st.bg, color: st.color, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      {st.label}
                     </span>
-                  )}
+                  ))}
                   <span style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
                     {(c.tags ?? []).map(t => (
                       <span key={t} style={{ width: 6, height: 6, borderRadius: '50%', background: TAG_COLOR[t] ?? '#ccc' }} />
@@ -596,12 +607,18 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
             <div>
               <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>Pipeline Stage</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                {PIPELINE_STAGES.map(s => (
-                  <button key={s.value} onClick={() => setAddForm(f => ({ ...f, leadStatus: s.value }))}
-                    style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, cursor: 'pointer', border: addForm.leadStatus === s.value ? `1.5px solid ${s.color}` : '1.5px solid transparent', background: s.bg, color: s.color, fontFamily: 'inherit' }}>
-                    {s.label}
-                  </button>
-                ))}
+                {PIPELINE_STAGES.map(s => {
+                  const on = addForm.leadStatuses.includes(s.value)
+                  return (
+                    <button key={s.value} onClick={() => setAddForm(f => ({
+                      ...f,
+                      leadStatuses: on ? f.leadStatuses.filter(v => v !== s.value) : [...f.leadStatuses, s.value],
+                    }))}
+                      style={{ fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 20, cursor: 'pointer', border: on ? `1.5px solid ${s.color}` : '1.5px solid transparent', background: s.bg, color: s.color, opacity: on ? 1 : 0.55, fontFamily: 'inherit' }}>
+                      {s.label}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 

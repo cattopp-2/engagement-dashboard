@@ -17,6 +17,9 @@ export const contacts = pgTable('contacts', {
   email: text('email'),
   linkedinUrl: text('linkedin_url'),
   threadsUrl: text('threads_url'),
+  // A contact can sit in several stages at once; leadStatus keeps the
+  // furthest-along one so older queries still work.
+  leadStatuses: text('lead_statuses').array(),
   leadStatus: text('lead_status'),  // 'to-contact' | 'contacted' | 'replied' | 'in-conversation' | 'proposal-sent' | 'follow-up' | 'closed' | 'not-suitable' | 'said-no'
   isHotLead: boolean('is_hot_lead').default(false),
   whatToSell: text('what_to_sell'),

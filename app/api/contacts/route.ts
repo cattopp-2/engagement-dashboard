@@ -16,9 +16,9 @@ export async function GET(req: NextRequest) {
   // Pipeline stage filter takes priority — show ALL contacts with that stage regardless of excluded flag
   const leadStatus = searchParams.get('leadStatus') || ''
   if (leadStatus) {
-    whereClause = sql`${nameFilter}lead_status = ${leadStatus}`
+    whereClause = sql`${nameFilter}lead_statuses @> ARRAY[${leadStatus}]::text[]`
   } else if (tag === 'pipeline') {
-    whereClause = sql`${nameFilter}lead_status IS NOT NULL`
+    whereClause = sql`${nameFilter}lead_statuses IS NOT NULL AND lead_statuses <> '{}'`
   } else if (tag === 'excluded') {
     whereClause = sql`${nameFilter}excluded = 1`
   } else if (tag === 'engaged') {
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
   // Return pipeline counts if requested
   if (searchParams.get('counts') === '1') {
-    const rows = await db.execute(sql`SELECT lead_status, COUNT(*)::int AS count FROM contacts WHERE lead_status IS NOT NULL GROUP BY lead_status`)
+    const rows = await db.execute(sql`SELECT unnest(lead_statuses) AS lead_status, COUNT(*)::int AS count FROM contacts WHERE lead_statuses IS NOT NULL GROUP BY 1`)
     return NextResponse.json(rows.rows)
   }
 
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE (excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE eng_count > 0 AND (excluded = 0 OR excluded IS NULL)`),
-      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE lead_status IS NOT NULL`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE lead_statuses IS NOT NULL AND lead_statuses <> '{}'`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE excluded = 1`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE tags @> ARRAY['icp']::text[] AND (excluded = 0 OR excluded IS NULL)`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE tags @> ARRAY['coach']::text[] AND (excluded = 0 OR excluded IS NULL)`),
@@ -82,8 +82,21 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(rows)
 }
 
+// Furthest along the pipeline, so the single lead_status column can be kept
+// in step with the list of stages a contact is in.
+const STAGE_ORDER = [
+  'not-suitable', 'said-no', 'to-contact', 'contacted', 'replied', 'instakit-dm',
+  'in-conversation', 'booked-discovery-call', 'proposal-sent', 'follow-up', 'closed',
+]
+
+function furthest(stages: string[] | null | undefined): string | null {
+  if (!stages?.length) return null
+  return [...stages].sort((a, b) => STAGE_ORDER.indexOf(a) - STAGE_ORDER.indexOf(b)).pop() ?? null
+}
+
 export async function POST(req: NextRequest) {
-  const { name, fbUrl, messengerUrl, linkedinUrl, threadsUrl, leadStatus, notes } = await req.json()
+  const { name, fbUrl, messengerUrl, linkedinUrl, threadsUrl, leadStatus, leadStatuses, notes } = await req.json()
+  const stages: string[] = leadStatuses ?? (leadStatus ? [leadStatus] : [])
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
   const created = await db.insert(contacts).values({
     name: name.trim(),
@@ -93,14 +106,14 @@ export async function POST(req: NextRequest) {
     ...(messengerUrl ? { messengerUrl } : {}),
     ...(linkedinUrl ? { linkedinUrl } : {}),
     ...(threadsUrl ? { threadsUrl } : {}),
-    ...(leadStatus ? { leadStatus } : {}),
+    ...(stages.length ? { leadStatuses: stages, leadStatus: furthest(stages) } : {}),
     ...(notes ? { notes } : {}),
   }).returning()
   return NextResponse.json(created[0])
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, name, tags, notes, fbUrl, messengerUrl, excluded, linkedinUrl, linkedinMessages, leadStatus, whatToSell, lastContact, futureContact, isHotLead, engCount } = await req.json()
+  const { id, name, tags, notes, fbUrl, messengerUrl, excluded, linkedinUrl, linkedinMessages, leadStatus, leadStatuses, whatToSell, lastContact, futureContact, isHotLead, engCount } = await req.json()
   const updated = await db.update(contacts)
     .set({
       tags, notes, fbUrl, messengerUrl,
@@ -109,7 +122,11 @@ export async function PATCH(req: NextRequest) {
       ...(excluded !== undefined ? { excluded: excluded ? 1 : 0 } : {}),
       ...(linkedinUrl !== undefined ? { linkedinUrl } : {}),
       ...(linkedinMessages !== undefined ? { linkedinMessages } : {}),
-      ...(leadStatus !== undefined ? { leadStatus } : {}),
+      ...(leadStatuses !== undefined
+        ? { leadStatuses, leadStatus: furthest(leadStatuses) }
+        : leadStatus !== undefined
+          ? { leadStatus, leadStatuses: leadStatus ? [leadStatus] : [] }
+          : {}),
       ...(whatToSell !== undefined ? { whatToSell } : {}),
       ...(lastContact !== undefined ? { lastContact } : {}),
       ...(futureContact !== undefined ? { futureContact } : {}),
