@@ -16,9 +16,10 @@ export async function GET(req: NextRequest) {
   // Pipeline stage filter takes priority — show ALL contacts with that stage regardless of excluded flag
   const leadStatus = searchParams.get('leadStatus') || ''
   if (leadStatus) {
-    whereClause = sql`${nameFilter}lead_statuses @> ARRAY[${leadStatus}]::text[]`
+    // Fall back to the old single column for any record whose list is empty.
+    whereClause = sql`${nameFilter}COALESCE(NULLIF(lead_statuses, '{}'), ARRAY[lead_status]) @> ARRAY[${leadStatus}]::text[]`
   } else if (tag === 'pipeline') {
-    whereClause = sql`${nameFilter}lead_statuses IS NOT NULL AND lead_statuses <> '{}'`
+    whereClause = sql`${nameFilter}(lead_statuses IS NOT NULL AND lead_statuses <> '{}' OR lead_status IS NOT NULL)`
   } else if (tag === 'excluded') {
     whereClause = sql`${nameFilter}excluded = 1`
   } else if (tag === 'engaged') {
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
 
   // Return pipeline counts if requested
   if (searchParams.get('counts') === '1') {
-    const rows = await db.execute(sql`SELECT unnest(lead_statuses) AS lead_status, COUNT(*)::int AS count FROM contacts WHERE lead_statuses IS NOT NULL GROUP BY 1`)
+    const rows = await db.execute(sql`SELECT unnest(COALESCE(NULLIF(lead_statuses, '{}'), ARRAY[lead_status])) AS lead_status, COUNT(*)::int AS count FROM contacts WHERE lead_statuses IS NOT NULL OR lead_status IS NOT NULL GROUP BY 1`)
     return NextResponse.json(rows.rows)
   }
 
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE (excluded = 0 OR excluded IS NULL) AND (tags IS NULL OR tags = '{}')`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE eng_count > 0 AND (excluded = 0 OR excluded IS NULL)`),
-      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE lead_statuses IS NOT NULL AND lead_statuses <> '{}'`),
+      db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE (lead_statuses IS NOT NULL AND lead_statuses <> '{}') OR lead_status IS NOT NULL`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE excluded = 1`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE tags @> ARRAY['icp']::text[] AND (excluded = 0 OR excluded IS NULL)`),
       db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE tags @> ARRAY['coach']::text[] AND (excluded = 0 OR excluded IS NULL)`),
