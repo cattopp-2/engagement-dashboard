@@ -10,13 +10,13 @@ export async function GET(req: NextRequest) {
 
   const nameFilter = search ? sql`name ILIKE ${'%' + search + '%'} AND ` : sql``
   const whereClause = status
-    ? sql`${nameFilter}tags @> ARRAY['warm']::text[] AND lead_status = ${status}`
-    : sql`${nameFilter}tags @> ARRAY['warm']::text[]`
+    ? sql`${nameFilter}lead_status = ${status}`
+    : (search ? sql`name ILIKE ${'%' + search + '%'}` : sql`TRUE`)
 
   const rows = await db.select().from(contacts)
     .where(whereClause)
     .orderBy(sql`last_contact DESC NULLS LAST, future_contact ASC NULLS LAST, name ASC`)
-    .limit(500)
+    .limit(6000)
 
   return NextResponse.json(rows)
 }
