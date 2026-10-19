@@ -60,6 +60,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const [todayCount, setTodayCount] = useState(0)
   const [totalEngaged, setTotalEngaged] = useState(initEngaged)
   const [flash, setFlash] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [notes, setNotes] = useState('')
   const [fbUrl, setFbUrl] = useState('')
@@ -186,6 +187,23 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
     await patchContact(id, { excluded: !currentlyExcluded })
     setContacts(prev => prev.filter(c => c.id !== id))
     setCurrentId(filtered.filter(c => c.id !== id)[0]?.id ?? null)
+  }
+
+  async function deleteContact(id: number) {
+    await fetch('/api/contacts', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    setConfirmDelete(null)
+    const rest = contacts.filter(c => c.id !== id)
+    setContacts(rest)
+    setCurrentId(rest[0]?.id ?? null)
+    fetch('/api/contacts?counts=tags').then(r => r.json()).then(setTagCounts)
+    fetch('/api/contacts?counts=1')
+      .then(r => r.json())
+      .then((rows: { lead_status: string; count: number }[]) =>
+        setPipelineCounts(Object.fromEntries(rows.map(r => [r.lead_status, r.count]))))
   }
 
   function handleLinkedinMessagesChange(val: string) {
@@ -458,6 +476,30 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                     style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#3B7EF6' }} />
                   {current.excluded ? 'Excluded' : 'Include'}
                 </label>
+              </div>
+
+              {/* Delete */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                {confirmDelete === current.id ? (
+                  <>
+                    <span style={{ fontSize: 12, color: '#DC2626', fontWeight: 500 }}>
+                      Delete {current.name} for good?
+                    </span>
+                    <button onClick={() => deleteContact(current.id)}
+                      style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 7, border: 'none', background: '#DC2626', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      Yes, delete
+                    </button>
+                    <button onClick={() => setConfirmDelete(null)}
+                      style={{ fontSize: 12, fontWeight: 500, padding: '6px 14px', borderRadius: 7, border: '1px solid #DDE1ED', background: '#F0F3F9', color: '#4B5270', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={() => setConfirmDelete(current.id)}
+                    style={{ fontSize: 12, fontWeight: 500, padding: '6px 14px', borderRadius: 7, border: '1px solid #DDE1ED', background: 'transparent', color: '#8892B0', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }}>
+                    Delete contact
+                  </button>
+                )}
               </div>
 
               {flash && (

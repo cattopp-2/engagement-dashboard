@@ -119,3 +119,15 @@ export async function PATCH(req: NextRequest) {
     .returning()
   return NextResponse.json(updated[0])
 }
+
+export async function DELETE(req: NextRequest) {
+  const { id } = await req.json()
+  if (typeof id !== 'number') {
+    return NextResponse.json({ error: 'id required' }, { status: 400 })
+  }
+  const deleted = await db.delete(contacts).where(eq(contacts.id, id)).returning()
+  if (!deleted[0]) {
+    return NextResponse.json({ error: 'not found' }, { status: 404 })
+  }
+  return NextResponse.json(deleted[0])
+}
