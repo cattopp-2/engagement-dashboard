@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   } else if (tag && tag !== 'all') {
     whereClause = sql`${nameFilter}tags @> ARRAY[${tag}]::text[] AND (excluded = 0 OR excluded IS NULL)`
   } else {
-    whereClause = sql`${nameFilter}(excluded = 0 OR excluded IS NULL) AND (eng_count = 0 OR eng_count IS NULL) AND NOT (tags @> ARRAY['to-check']::text[])`
+    whereClause = search ? sql`name ILIKE ${'%' + search + '%'}` : sql`TRUE`
   }
 
   // Return pipeline counts if requested
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
   const rows = await db.select().from(contacts)
     .where(whereClause)
     .orderBy(orderClause)
-    .limit(500)
+    .limit(6000)
 
   return NextResponse.json(rows)
 }

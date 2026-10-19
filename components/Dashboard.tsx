@@ -210,6 +210,28 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
         <div style={{ fontSize: 11, color: '#8892B0' }}>{totalCount.toLocaleString()} contacts</div>
       </div>
 
+      {/* Pipeline stage tabs */}
+      <div style={{ display: 'flex', gap: 2, padding: '0 18px', background: '#fff', borderBottom: '1px solid #DDE1ED', overflowX: 'auto', flexShrink: 0 }}>
+        {[{ value: '', label: 'All' }, ...PIPELINE_STAGES.map(s => ({ value: s.value, label: s.label }))].map(tab => {
+          const count = tab.value === '' ? (tagCounts.all ?? 0) : (pipelineCounts[tab.value] ?? 0)
+          const st = tab.value ? PIPELINE_MAP[tab.value] : null
+          const isActive = tab.value ? activePipeline === tab.value : !activePipeline
+          return (
+            <button key={tab.value || 'all'} onClick={() => { setActivePipeline(tab.value); setActiveFilter(tab.value ? 'pipeline' : 'all') }} style={{
+              fontSize: 12, fontWeight: 500, padding: '8px 12px', border: 'none', borderBottom: isActive ? '2px solid #3B7EF6' : '2px solid transparent',
+              background: 'transparent', color: isActive ? '#3B7EF6' : '#4B5270', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+              {tab.label}
+              {count > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 5px', borderRadius: 10, background: isActive ? '#3B7EF6' : (st?.bg ?? '#F0F3F9'), color: isActive ? '#fff' : (st?.color ?? '#4B5270') }}>
+                  {count}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
       {/* Progress */}
       <div style={{ height: 2, background: '#DDE1ED', flexShrink: 0 }}>
         <div style={{ height: '100%', background: '#3B7EF6', width: `${(totalEngaged / totalCount) * 100}%`, transition: 'width 0.5s ease' }} />
@@ -478,25 +500,6 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                     {f.label}
                     {count !== undefined && count > 0 && (
                       <span style={{ fontSize: 10, fontWeight: 700, lineHeight: 1, padding: '1px 5px', borderRadius: 10, background: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.08)', color: isActive ? '#fff' : f.inactiveColor }}>
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-            {/* Pipeline stage filters */}
-            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#8892B0', marginBottom: 5 }}>Pipeline Stage</div>
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {PIPELINE_STAGES.map(s => {
-                const count = pipelineCounts[s.value] ?? 0
-                const isActive = activePipeline === s.value
-                return (
-                  <button key={s.value} onClick={() => { setActivePipeline(isActive ? '' : s.value); setActiveFilter('pipeline') }}
-                    style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 20, border: '1px solid', borderColor: isActive ? s.color : '#DDE1ED', background: isActive ? s.bg : 'transparent', color: isActive ? s.color : '#8892B0', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.12s', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    {s.label}
-                    {count > 0 && (
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '0px 4px', borderRadius: 8, background: isActive ? s.color : '#DDE1ED', color: isActive ? '#fff' : '#4B5270', minWidth: 14, textAlign: 'center' }}>
                         {count}
                       </span>
                     )}
