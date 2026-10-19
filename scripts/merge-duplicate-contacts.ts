@@ -71,7 +71,7 @@ function buildGroups(rows: Row[]): Row[][] {
       byMessenger.set(r.messengerUrl, list)
     }
   }
-  for (const list of [...byName.values(), ...byMessenger.values()]) {
+  for (const list of [...Array.from(byName.values()), ...Array.from(byMessenger.values())]) {
     for (let i = 1; i < list.length; i++) union(list[0].id, list[i].id)
   }
 
@@ -82,7 +82,7 @@ function buildGroups(rows: Row[]): Row[][] {
     list.push(r)
     groups.set(root, list)
   }
-  return [...groups.values()].filter(g => g.length > 1)
+  return Array.from(groups.values()).filter(g => g.length > 1)
 }
 
 /** Oldest record wins: it holds the queue position and the longest history. */
@@ -116,7 +116,7 @@ function mergeGroup(group: Row[]) {
   if (mergedNotes !== (survivor.notes ?? null)) patch.notes = mergedNotes
 
   // Tags: union.
-  const tags = [...new Set(group.flatMap(r => r.tags ?? []))]
+  const tags = Array.from(new Set(group.flatMap(r => r.tags ?? [])))
   if (tags.join('|') !== (survivor.tags ?? []).join('|')) patch.tags = tags
 
   // Stage: furthest along.

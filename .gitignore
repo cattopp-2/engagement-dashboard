@@ -8,3 +8,5 @@ node_modules/
 .vercel
 .env*
 backups/
+scripts/merge-remaining-duplicates.ts
+scripts/merge-safe-duplicates.ts
