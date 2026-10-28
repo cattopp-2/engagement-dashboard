@@ -70,6 +70,8 @@ export async function GET(req: NextRequest) {
     })
   }
 
+  const offset = parseInt(searchParams.get('offset') || '0', 10)
+
   // Order: engaged tab sorts by most recent first; everything else by queue order
   const orderClause = tag === 'engaged'
     ? sql`last_engaged DESC NULLS LAST`
@@ -78,7 +80,8 @@ export async function GET(req: NextRequest) {
   const rows = await db.select().from(contacts)
     .where(whereClause)
     .orderBy(orderClause)
-    .limit(6000)
+    .limit(100)
+    .offset(offset)
 
   return NextResponse.json(rows)
 }

@@ -48,9 +48,10 @@ interface Props {
   initialContacts: Contact[]
   totalCount: number
   engagedCount: number
+  initialHasMore: boolean
 }
 
-export default function Dashboard({ initialContacts, totalCount, engagedCount: initEngaged }: Props) {
+export default function Dashboard({ initialContacts, totalCount, engagedCount: initEngaged, initialHasMore }: Props) {
   const [contacts, setContacts] = useState<Contact[]>(initialContacts)
   const [currentId, setCurrentId] = useState<number | null>(initialContacts[0]?.id ?? null)
   const [search, setSearch] = useState('')
@@ -65,6 +66,11 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const [totalEngaged, setTotalEngaged] = useState(initEngaged)
   const [flash, setFlash] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
+  const [offset, setOffset] = useState(initialContacts.length)
+  const [hasMore, setHasMore] = useState(initialHasMore)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const loadingMoreRef = useRef(false)
+  const loadMoreAbortRef = useRef<AbortController | null>(null)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [notes, setNotes] = useState('')
   const [fbUrl, setFbUrl] = useState('')
@@ -105,6 +111,8 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   useEffect(() => {
     if (searchTimer.current) clearTimeout(searchTimer.current)
     searchTimer.current = setTimeout(async () => {
+      loadMoreAbortRef.current?.abort()
+      loadingMoreRef.current = false
       const params = new URLSearchParams()
       if (search) params.set('search', search)
       if (activeFilter !== 'all') params.set('tag', activeFilter)
@@ -113,8 +121,36 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
       const rows: Contact[] = await res.json()
       setContacts(rows)
       setCurrentId(rows[0]?.id ?? null)
+      setOffset(rows.length)
+      setHasMore(rows.length === 100)
     }, 300)
   }, [search, activeFilter, activePipeline])
+
+  async function loadMore() {
+    if (!hasMore || loadingMoreRef.current) return
+    loadingMoreRef.current = true
+    setLoadingMore(true)
+    loadMoreAbortRef.current?.abort()
+    const ctrl = new AbortController()
+    loadMoreAbortRef.current = ctrl
+    try {
+      const params = new URLSearchParams()
+      if (search) params.set('search', search)
+      if (activeFilter !== 'all') params.set('tag', activeFilter)
+      if (activePipeline) params.set('leadStatus', activePipeline)
+      params.set('offset', String(offset))
+      const res = await fetch(`/api/contacts?${params}`, { signal: ctrl.signal })
+      const rows: Contact[] = await res.json()
+      setContacts(prev => [...prev, ...rows])
+      setOffset(prev => prev + rows.length)
+      setHasMore(rows.length === 100)
+    } catch {
+      // aborted or network error — ignore
+    } finally {
+      loadingMoreRef.current = false
+      setLoadingMore(false)
+    }
+  }
 
   const filtered = contacts
 
@@ -535,7 +571,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
               <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name…"
                 style={{ flex: 1, background: '#fff', border: '1px solid #DDE1ED', borderRadius: 6, padding: '7px 11px', fontFamily: 'inherit', fontSize: 13, color: '#1A1F36', outline: 'none' }} />
               <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#8892B0', whiteSpace: 'nowrap' }}>
-                {filtered.length.toLocaleString()} people
+                {filtered.length.toLocaleString()}{hasMore ? '+' : ''} people
               </span>
               <button onClick={() => setShowAdd(true)} style={{ fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 7, background: '#3B7EF6', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
                 + Add Lead
@@ -562,7 +598,14 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
             </div>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}
+            onScroll={e => {
+              const el = e.currentTarget
+              if (el.scrollHeight - el.scrollTop - el.clientHeight < 400 && hasMore && !loadingMoreRef.current) {
+                loadMore()
+              }
+            }}
+          >
             {filtered.map((c, i) => {
               const isCurrent = c.id === currentId
               const rowStages = stagesOf(c).map(v => PIPELINE_MAP[v]).filter(Boolean)
@@ -587,6 +630,11 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
                 </div>
               )
             })}
+            {hasMore && (
+              <div style={{ padding: '12px 16px', textAlign: 'center', fontSize: 12, color: '#8892B0' }}>
+                {loadingMore ? 'Loading…' : 'Scroll for more'}
+              </div>
+            )}
           </div>
         </div>
       </div>

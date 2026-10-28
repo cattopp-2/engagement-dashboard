@@ -12,10 +12,10 @@ export default async function Home() {
       asc(contacts.queuePos),
       asc(contacts.id)
     )
-    .limit(6000)
+    .limit(100)
 
   const [{ total }] = await db.select({ total: sql<number>`count(*)::int` }).from(contacts)
   const [{ engaged }] = await db.select({ engaged: sql<number>`count(*) filter (where eng_count > 0)::int` }).from(contacts)
 
-  return <Dashboard initialContacts={rows} totalCount={total} engagedCount={engaged} />
+  return <Dashboard initialContacts={rows} totalCount={total} engagedCount={engaged} initialHasMore={rows.length === 100} />
 }
