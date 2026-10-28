@@ -79,6 +79,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
   const [linkedinMessages, setLinkedinMessages] = useState('')
   const liMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
   const [editingName, setEditingName] = useState(false)
   const [nameVal, setNameVal] = useState('')
   const nameRef = useRef<HTMLInputElement>(null)
@@ -123,6 +124,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
       setCurrentId(rows[0]?.id ?? null)
       setOffset(rows.length)
       setHasMore(rows.length === 100)
+      if (listRef.current) listRef.current.scrollTop = 0
     }, 300)
   }, [search, activeFilter, activePipeline])
 
@@ -598,7 +600,7 @@ export default function Dashboard({ initialContacts, totalCount, engagedCount: i
             </div>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}
+          <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}
             onScroll={e => {
               const el = e.currentTarget
               if (el.scrollHeight - el.scrollTop - el.clientHeight < 400 && hasMore && !loadingMoreRef.current) {
